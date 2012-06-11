@@ -93,7 +93,7 @@
                     return sample;
                 }
 
-                if (!self instanceof constructor) {
+                if (!(self instanceof constructor)) {
                     throw "Object must be instantiated with new.";
                 }
 
@@ -115,7 +115,7 @@
                     return sample;
                 }
 
-                if (!self instanceof constructor) {
+                if (!(self instanceof constructor)) {
                     throw "Object must be instantiated with new.";
                 }
 
@@ -438,7 +438,7 @@
     //
     // the value must be immutable.
     basilisk.Atom = function (initialValue, validator) {
-        if (!this instanceof basilisk.Atom) { throw "Please instantiate each atom separately." }
+        if (!(this instanceof basilisk.Atom)) { throw "Please instantiate each atom separately." }
 
         // Most state is held in closure, and thus can only be changed by these
         // privileged methods.
