@@ -108,7 +108,7 @@
 
             // add a watcher.  Will be called if the value changes.
             addWatcher: function (watcher) {
-                if (!_.indexOf(watchers, watcher)) {
+                if (_.indexOf(watchers, watcher) === -1) {
                     watchers.push(watcher);
                 }
             },
@@ -177,6 +177,10 @@
                     sample = sample || {},
                     origValues = _.extend({}, sample);
 
+                if (sample instanceof constructor) { 
+                    return sample;
+                }
+
                 if (!self instanceof constructor) {
                     throw "Object must be instantiated with new.";
                 }
@@ -185,11 +189,17 @@
                 // in this scenario: we will have to rely on failure modes 
                 // being caught in modern browsers.
                 _.each(propList, function (value, key) {
-                    self[key] = value;
+                    var valueFn = value.filter || _.identity;
+                    self[key] = valueFn(sample[key] || undefined);
                 });
 
+                // we have to do this per-instance, rather than per-class.
                 self.with_ = function (adjustedProperties) {
                     var sample = _.defaults({}, adjustedProperties, origValues);
+                    _.each(propList, function (value, key) {
+                        var valueFn = value.filter || _.identity;
+                        sample[key] = valueFn(sample[key] || undefined);
+                    });
                     return new constructor(sample);
                 }
             };
@@ -197,8 +207,11 @@
             // create a fully immutable object chain.
             constructor = function (sample) {
                 var self = this,
-                    sample = sample || {},
-                    withFn; // take a copy, for modification speed.
+                    sample = sample || {};
+
+                if (sample instanceof constructor) { 
+                    return sample;
+                }
 
                 if (!self instanceof constructor) {
                     throw "Object must be instantiated with new.";
@@ -207,23 +220,28 @@
                 // TODO: handle more complex property defitions.
                 // TODO: verify performance on this.
                 _.each(propList, function (value, key) {
+                    var valueFn = value.filter || _.identity;
                     Object.defineProperty(self, key, {
-                        value: sample[key] || undefined,
+                        value: valueFn(sample[key] || undefined),
                         writable: false,
                         enumerable: true
                     });
                 });
-
-                // Create a new version of the object, with the specified "adjusted"
-                // properties set to their specified values (and un-specified properties
-                // set to their value in the current object.)
-                self.with_ = withFn = function (adjustProperties) {
+            };
+            
+            // Create a new version of the object, with the specified "adjusted"
+            // properties set to their specified values (and un-specified properties
+            // set to their value in the current object.)
+            constructor.prototype.with_ = function (adjustProperties) {
                     // *we* are a perfect reference sample, since defineProperty
                     // ensures immutability.
-                    var sample = _.defaults({}, adjustProperties, self);
+                    var sample = _.defaults({}, adjustProperties, this);
+                    _.each(propList, function (value, key) {
+                        var valueFn = value.filter || _.identity;
+                        sample[key] = valueFn(sample[key] || undefined);
+                    });
                     return new constructor(sample);
                 }
-            };
         }
 
         // add a properties object, with the original properties defined.
@@ -397,13 +415,69 @@
         var idx = 0,
             next = this.head;
 
-        while (next !== undefined) {
+        while (next !== undefined && next !== null) {
             iterator.apply(context, [next.value, idx, this, next]);
             idx += 1;
             next = next.rest;
         }
     };
 
+    /**
+     * Return a new ForwardList containing only those elements of this list for which 
+     * the iterator function returns a truthy value.  
+     *
+     * @param filterFn a function taking (value, index, list, node) -> boolean
+     * @return ForwardList
+     */
+    basilisk.collections.ForwardList.prototype.filter = function (filterFn, context)
+    {
+        var values = [],
+            changedValue = false;
+
+        this.each(function (value, idx, list, node) {
+            if (filterFn.apply(this, arguments)) {
+                values.push(value);
+            } else {
+                changedValue = true;
+            }
+        });
+
+        if (!changedValue) {
+            return this;
+        } else {
+            return basilisk.collections.ForwardList.from(values);
+        }
+    }
+
+    /**
+     * Returns the first value that matches the specified filter function.
+     */
+    basilisk.collections.ForwardList.prototype.first = function (filterFn, context) {
+        var idx = 0,
+            filterFn = filterFn || function () { return true; },
+            next = this.head;
+
+        while (next !== undefined && next !== null) {
+            if (filterFn.apply(context, [next.value, idx, this, next])) {
+                return next.value;
+            }
+            idx += 1;
+            next = next.rest;
+        }
+
+        return undefined;
+    }
+
+    // Factory method: given an array-like object or a forward list, return a forward list.
+    basilisk.collections.ForwardList.from = function (source) {
+        if (source instanceof basilisk.collections.ForwardList) {
+            return source;
+        } else {
+            return _.reduceRight(source, function (memo, value) { 
+                return memo.shift(value);
+            }, new basilisk.collections.ForwardList({ head: null }));
+        }
+    }
 
     // uninstalls basilisk, returns this instance.
     basilisk.noConflict = function () {
