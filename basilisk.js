@@ -369,9 +369,17 @@
         }
     }
 
-    basilisk.collections.ForwardListNode = basilisk.definitions.makeConstructor({
-        rest: { noWith: true },
-        value: {}
+    // define basic datastructures for forward list (singly linked list)
+
+    _.extend(basilisk.collections, {
+        ForwardListNode: basilisk.definitions.makeConstructor({
+            rest: { noWith: true },
+            value: {}
+        }),
+        // A simple list, with O(1) shift and unshift.  Suitable for simple stacks.
+        ForwardList: basilisk.definitions.makeConstructor({
+          head: {}
+      })
     });
 
     basilisk.collections.ForwardListNode.prototype.length = oncePerInstance(function () {
@@ -383,100 +391,103 @@
     }, '_length');
 
 
-    // A simple list, with O(1) shift (onto head) and O(n) each.
-    basilisk.collections.ForwardList = basilisk.definitions.makeConstructor({
-        head: {}
-    });
+    // Instance methods on ForwardList.
 
-    // create a node with the specified value, and return a list with that as its head.
-    // this is a little more expensive here, but it makes iteration in the empty case
-    // simple.
-    basilisk.collections.ForwardList.prototype.shift = function (value) {
-        var self = this;
-        return self.with_({
-            head: new basilisk.collections.ForwardListNode({
-                rest: self.head,
-                value: value
-            })
-        });
-    };
+    _.extend(basilisk.collections.ForwardList.prototype, {
+        // create a node with the specified value, and return a list with that as its head.
+        // this is a little more expensive here, but it makes iteration in the empty case
+        // simple.
+        shift: function (value) {
+            var self = this;
+            return self.with_({
+                head: new basilisk.collections.ForwardListNode({
+                    rest: self.head,
+                    value: value
+                })
+            });
+        },
 
-    basilisk.collections.ForwardList.prototype.length = oncePerInstance(function () {
-        if (this.head === undefined) {
-            return 0;
-        } else {
-            return this.head.length();
-        }
-    }, '_length');
+        length: oncePerInstance(function () {
+            if (this.head === undefined) {
+                return 0;
+            } else {
+                return this.head.length();
+            }
+        }, '_length'),
 
-    // return a list without the head node, 
-    basilisk.collections.ForwardList.prototype.unshift = function () {
-        var self = this,
+        // return a list without the head node, 
+        unshift: function () {
+            var self = this,
             rest = undefined;
-        if (self.head) {
-            rest = self.head.rest;
-        }
-        return [this.head.value, new basilisk.collections.ForwardList({
-            head: rest 
-        })];
-    }
 
-    basilisk.collections.ForwardList.prototype.each = function (iterator, context) {
-        var idx = 0,
+            if (self.head) {
+                rest = self.head.rest;
+            } else {
+                return self;
+            }
+
+            return [this.head.value, new basilisk.collections.ForwardList({
+                head: rest 
+            })];
+        },
+
+        each: function (iterator, context) {
+            var idx = 0,
             next = this.head;
 
-        while (next !== undefined && next !== null) {
-            iterator.apply(context, [next.value, idx, this, next]);
-            idx += 1;
-            next = next.rest;
-        }
-    };
+            while (next !== undefined && next !== null) {
+                iterator.apply(context, [next.value, idx, this, next]);
+                idx += 1;
+                next = next.rest;
+            }
+        },
 
-    /**
-     * Return a new ForwardList containing only those elements of this list for which 
-     * the iterator function returns a truthy value.  
-     *
-     * @param filterFn a function taking (value, index, list, node) -> boolean
-     * @return ForwardList
-     */
-    basilisk.collections.ForwardList.prototype.filter = function (filterFn, context)
-    {
-        var values = [],
+        /**
+         * Return a new ForwardList containing only those elements of this list for which 
+         * the iterator function returns a truthy value.  
+         *
+         * @param filterFn a function taking (value, index, list, node) -> boolean
+         * @return ForwardList
+         */
+         filter: function (filterFn, context)
+         {
+            var values = [],
             changedValue = false;
 
-        this.each(function (value, idx, list, node) {
-            if (filterFn.apply(this, arguments)) {
-                values.push(value);
+            this.each(function (value, idx, list, node) {
+                if (filterFn.apply(this, arguments)) {
+                    values.push(value);
+                } else {
+                    changedValue = true;
+                }
+            });
+
+            if (!changedValue) {
+                return this;
             } else {
-                changedValue = true;
+                return basilisk.collections.ForwardList.from(values);
             }
-        });
+        },
 
-        if (!changedValue) {
-            return this;
-        } else {
-            return basilisk.collections.ForwardList.from(values);
-        }
-    }
-
-    /**
-     * Returns the first value that matches the specified filter function.
-     */
-    basilisk.collections.ForwardList.prototype.first = function (filterFn, context) {
-        var idx = 0,
+        /**
+         * Returns the first value that matches the specified filter function.
+         */
+         first: function (filterFn, context) {
+            var idx = 0,
             filterFn = filterFn || function () { return true; },
             next = this.head;
 
-        while (next !== undefined && next !== null) {
-            if (filterFn.apply(context, [next.value, idx, this, next])) {
-                return next.value;
+            while (next !== undefined && next !== null) {
+                if (filterFn.apply(context, [next.value, idx, this, next])) {
+                    return next.value;
+                }
+                idx += 1;
+                next = next.rest;
             }
-            idx += 1;
-            next = next.rest;
-        }
 
-        return undefined;
-    }
+            return undefined;
+        }
+    });
 
     // Factory method: given an array-like object or a forward list, return a forward list.
     basilisk.collections.ForwardList.from = function (source) {
