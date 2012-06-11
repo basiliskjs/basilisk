@@ -23,9 +23,6 @@
 
     var basilisk  = {};
 
-    // TODO: we depend on underscore, but how does one properly detect that
-    //       it is missing?
-
     if (!_) {
         throw "Basilisk depends on underscore: please ensure that underscore is loaded first.";
     }
@@ -172,7 +169,7 @@
     // actual contents of properties is undefined.
     basilisk.definitions.makeConstructor = function (properties) {
         var constructor,
-            propList = properties;
+            propList = _.extend({}, properties);
 
         // cannot have a property called with_ in the list.
 
@@ -187,6 +184,7 @@
                     sample = sample || {},
                     origValues = _.extend({}, sample);
 
+                // microoptimisation 
                 if (sample instanceof constructor) { 
                     return sample;
                 }
@@ -202,16 +200,6 @@
                     var valueFn = value.filter || _.identity;
                     self[key] = valueFn(sample[key] || undefined);
                 });
-
-                // we have to do this per-instance, rather than per-class.
-                self.with_ = function (adjustedProperties) {
-                    var sample = _.defaults({}, adjustedProperties, origValues);
-                    _.each(propList, function (value, key) {
-                        var valueFn = value.filter || _.identity;
-                        sample[key] = valueFn(sample[key] || undefined);
-                    });
-                    return new constructor(sample);
-                }
             };
         } else {
             // create a fully immutable object chain.
@@ -227,8 +215,6 @@
                     throw "Object must be instantiated with new.";
                 }
 
-                // TODO: handle more complex property defitions.
-                // TODO: verify performance on this.
                 _.each(propList, function (value, key) {
                     var valueFn = value.filter || _.identity;
                     Object.defineProperty(self, key, {
@@ -239,19 +225,47 @@
                 });
             };
             
-            // Create a new version of the object, with the specified "adjusted"
-            // properties set to their specified values (and un-specified properties
-            // set to their value in the current object.)
-            constructor.prototype.with_ = function (adjustProperties) {
-                    // *we* are a perfect reference sample, since defineProperty
-                    // ensures immutability.
-                    var sample = _.defaults({}, adjustProperties, this);
-                    _.each(propList, function (value, key) {
-                        var valueFn = value.filter || _.identity;
-                        sample[key] = valueFn(sample[key] || undefined);
-                    });
-                    return new constructor(sample);
+        }
+
+
+        // Create a new version of the object, with the specified "adjusted"
+        // properties set to their specified values (and un-specified properties
+        // set to their value in the current object.)
+        constructor.prototype.with_ = function (adjustProperties) {
+            // *we* are a perfect reference sample, since defineProperty
+            // ensures immutability.
+            var self = this,
+                sample = {},
+                changed = false;
+            _.each(propList, function (value, key) {
+                var valueFn = value.filter || undefined,
+                    strictEqual = value.strictEqual || undefined,
+                    rawValue, 
+                    value;
+
+                if (Object.hasOwnProperty.call(adjustProperties, key)) {
+                    rawValue = adjustProperties[key];
+                } else {
+                    rawValue = self[key];
+                } 
+
+                if (valueFn) { 
+                    value = valueFn(rawValue); 
+                } else { 
+                    value = rawValue; 
                 }
+
+                if (strictEqual) {
+                    changed = changed || !strictEqual(value, self[key]);
+                } else {
+                    changed = changed || (value !== self[key]);
+                }
+
+                sample[key] = value;
+            });
+
+            if (!changed) { return self; }
+            return new constructor(sample);
         }
 
         // add a properties object, with the original properties defined.
@@ -272,6 +286,20 @@
 
         return constructor;
     } 
+
+    // some very simple property objects.  the float value is particularly useful.
+    basilisk.properties = {
+        floatProperty: {
+            strictEquals: function (a, b) {
+                return Math.abs(a - b) < 0.00001;
+            }
+        },
+        forwardListProperty: {
+            filter: function (value) {
+                return basilisk.collections.ForwardList.from(value);
+            }
+        }
+    }
 
     // Standard Watcher creation functions
     // ----
@@ -399,7 +427,7 @@
         // simple.
         shift: function (value) {
             var self = this;
-            return self.with_({
+            return new basilisk.collections.ForwardList({
                 head: new basilisk.collections.ForwardListNode({
                     rest: self.head,
                     value: value

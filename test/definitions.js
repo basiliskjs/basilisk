@@ -141,6 +141,37 @@
         ok(eg2.x instanceof YCons, 'Filter function result should be passed through.');
     });
 
+    test('with_ makes no change if property is identical', function () {
+        var Cons = b.definitions.makeConstructor({
+            x: {}
+        }), eg1, eg2, common = {};
+
+        eg1 = new Cons({
+            x: common
+        });
+        eg2 = eg1.withX(common);
+
+        strictEqual(eg2, eg1, 'If there is no change, apply no change.');
+    });
+
+    test('with_ honours strictEqual function', function () {
+        var Cons = b.definitions.makeConstructor({
+            x: { strictEqual: function (a, b) { return a > b } }
+        }), eg1, eg2;
+
+        eg1 = new Cons({
+            x: 3
+        });
+        
+        eg2 = eg1.withX(5);
+
+        strictEqual(eg2, eg1, 'No change according to comparison function.');
+
+        eg2 = eg1.withX(1);
+
+        notStrictEqual(eg2, eg1, 'Changed according to function.');
+    });
+
     // we have slightly different tests for ES5 compliant versions, and non-ES5 compliant versions.
     if (properStrict) {
         module('ES5 Strict, basilisk.definitions');
