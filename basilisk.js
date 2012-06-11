@@ -4,29 +4,39 @@
 //      (c) 2012 Moo Print Ltd. under an MIT license
 //      see http://github.com/moodev/basilisk
 
-(function () {
+(function (root, factory) {
+    if (typeof exports === 'object') {
+        // Node. Does not work with strict CommonJS, but
+        // only CommonJS-like enviroments that support module.exports,
+        // like Node.
+        module.exports = factory(require('underscore'));
+    } else if (typeof define === 'function' && define.amd) {
+        // AMD. Register as an anonymous module.
+        define(['underscore'], factory);
+    } else {
+        // Browser globals
+        root.basilisk = factory(root._);
+    }
+}(this, function (_) {
     "use strict";
     // bind to window or global, depending on environment.
-    var root = this;
-    var previousBasilisk = root.basilisk;
 
-    var basilisk = root.basilisk = {};
+    var basilisk  = {};
 
     // TODO: we depend on underscore, but how does one properly detect that
     //       it is missing?
 
-    if (!root._) {
+    if (!_) {
         throw "Basilisk depends on underscore: please ensure that underscore is loaded first.";
     }
 
-    var _ = root._;
 
     // TODO we log watcher-failure and a few other events - they are considered
     //      "broken" behaviours.
 
     var log = function () { };
-    if (root.console && root.console.log) { 
-        log = function () { root.console.log.apply(root.console, arguments); }
+    if (window && window.console && window.console.log) {
+        log = function () { window.console.log.apply(window.console, arguments); }
     }
 
     // Atoms provide a way to manage shared, synchronous, independent state.
@@ -479,13 +489,5 @@
         }
     }
 
-    // uninstalls basilisk, returns this instance.
-    basilisk.noConflict = function () {
-        root.basilisk = previousBasilisk;
-        return basilisk;
-    }
-
-    // TODO wrapper for AMD.
-    // TODO wrapper for use in nodejs.
-
-}).call(this);
+    return basilisk;
+}));
