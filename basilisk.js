@@ -21,7 +21,7 @@
     "use strict";
     // bind to window or global, depending on environment.
 
-    var basilisk  = {};
+    var b, basilisk = b = {};
 
     if (!_) {
         throw "Basilisk depends on underscore: please ensure that underscore is loaded first.";
@@ -36,101 +36,6 @@
         log = function () { window.console.log.apply(window.console, arguments); }
     }
 
-    // Atoms provide a way to manage shared, synchronous, independent state.
-    // http://clojure.org/atoms
-    //
-    // If supplied the validator must be a function (new, old) {} -> boolean, 
-    // returning true if the changed value is valid, and false if not.
-    //
-    // the value must be immutable.
-    basilisk.Atom = function (initialValue, validator) {
-        if (!this instanceof basilisk.Atom) { throw "Please instantiate each atom separately." }
-
-        // Most state is held in closure, and thus can only be changed by these
-        // privileged methods.
-
-        var current,
-            self = this,
-            // TODO replace with a FixedVector.
-            watchers = basilisk.collections.ForwardList.from([]),
-            // set the value if it passes the validator.
-            _set = function (possible) {
-                var old = current;
-                if (possible !== current) {
-                    if (!validator(possible, current)) {
-                        throw "Value does not pass validator.";
-                    }
-
-                    current = possible;
-
-                    watchers.each(function (watcher) {
-                        try {
-                            watcher(current, old);
-                        } catch (e) {
-                            // do nothing
-                            log("Watcher threw exception: this behaviour is broken.");
-                        }
-                    });
-                }
-                
-                return current;
-            };
-
-        validator = validator || function () { return true; };
-        // we fail immediately if the initial value does not validate.
-
-        _.extend(self, {
-            // Retrieve the current value of the Atom.
-            deref: function () { return current; },
-
-            // Applies the given "change" function to the old state,
-            // checks that the result passes the validator, and updates the current state.
-            // 
-            // Will be called as swapFunction(old, *args);  The function should have no side-effects.
-            //
-            // Returns the new state or throws an exception.
-
-            swap: function (swapFunction) {
-                var possible, args = [current];
-
-                if (arguments.length > 1) {
-                    args.push.apply(args, _.rest(argument));
-                }
-
-                possible = swapFunction.apply(null, args);
-
-                // update current, call watchers
-                return this.compareAndSet(current, possible);
-            },
-
-            // If oldVal matches current, change to using newVal.
-            // return true if changed, false if not changed.
-            compareAndSet: function (oldVal, newVal) {
-                if (oldVal === current) {
-                    return (_set(newVal) === newVal);
-                } else {
-                    return false;
-                }
-            },
-
-            // add a watcher.  Will be called if the value changes.
-            addWatcher: function (watcher) {
-                if (watchers.first(function (compare) { return compare === watcher; }) === undefined) {
-                    watchers = watchers.shift(watcher);
-                }
-            },
-
-            removeWatcher: function (watcher) {
-                watchers = watchers.filter(function (compare) { return compare !== watcher; });
-            }
-        });
-
-        // shorter alias for cas.
-        this.cas = this.compareAndSet;
-
-        // set the initial state.
-        _set(initialValue);
-    };
 
     // Definitions
     // -----------
@@ -163,11 +68,10 @@
     }
 
     // Definitions module.
-    basilisk.definitions = {};
+    b.definitions = {};
 
-    // Create a class constructor.
-    // actual contents of properties is undefined.
-    basilisk.definitions.makeConstructor = function (properties) {
+    // Create a struct construcot.
+    b.struct = function (properties) {
         var constructor,
             propList = _.extend({}, properties);
 
@@ -285,18 +189,15 @@
         });
 
         return constructor;
-    } 
+    };
+
+    basilisk.definitions.makeConstructor = b.struct;
 
     // some very simple property objects.  the float value is particularly useful.
     basilisk.properties = {
-        floatProperty: {
+        float: {
             strictEquals: function (a, b) {
                 return Math.abs(a - b) < 0.00001;
-            }
-        },
-        forwardListProperty: {
-            filter: function (value) {
-                return basilisk.collections.ForwardList.from(value);
             }
         }
     }
@@ -313,7 +214,7 @@
     // for optimisation and collapsing of functions), you can use the creation functions
     // below here to create new functions which can be used as watchers.
 
-    basilisk.watchers = {};
+    b.watchers = {};
 
     // TODO these are very much first-pass implementations: replace with something
     // substantially more clever.
@@ -321,7 +222,7 @@
     // Watcher function for a dotted path inside a particular atom.  
     // will call the "watcher" function with the "stemmed" properties
     // @return fn watching a particular path.
-    basilisk.watchers.path = function (path, watcher) {
+    b.watchers.path = function (path, watcher) {
         var parts = path.split('.'),
             // function to extract the specified path from the root.
             // WILL mutate the parts parameter.
@@ -365,7 +266,7 @@
     // Very simple collection objects.  Not currently optimised for performance,
     // though that would not be exceptionally difficult to accomplish.
 
-    basilisk.collections = {};
+    b.collections = {};
 
     // we routinely have methods that are called once, with no arguments.
     // (eg. length, etc.). Since we're immutable, as long as we cache the result
@@ -399,7 +300,7 @@
 
     // define basic datastructures for forward list (singly linked list)
 
-    _.extend(basilisk.collections, {
+    _.extend(b.collections, {
         ForwardListNode: basilisk.definitions.makeConstructor({
             rest: { noWith: true },
             value: {}
@@ -410,7 +311,7 @@
       })
     });
 
-    basilisk.collections.ForwardListNode.prototype.length = oncePerInstance(function () {
+    b.collections.ForwardListNode.prototype.length = oncePerInstance(function () {
         if (this.rest === undefined) {
             return 1;
         } else {
@@ -421,14 +322,14 @@
 
     // Instance methods on ForwardList.
 
-    _.extend(basilisk.collections.ForwardList.prototype, {
+    _.extend(b.collections.ForwardList.prototype, {
         // create a node with the specified value, and return a list with that as its head.
         // this is a little more expensive here, but it makes iteration in the empty case
         // simple.
         shift: function (value) {
             var self = this;
-            return new basilisk.collections.ForwardList({
-                head: new basilisk.collections.ForwardListNode({
+            return new b.collections.ForwardList({
+                head: new b.collections.ForwardListNode({
                     rest: self.head,
                     value: value
                 })
@@ -454,7 +355,7 @@
                 return self;
             }
 
-            return [this.head.value, new basilisk.collections.ForwardList({
+            return [this.head.value, new b.collections.ForwardList({
                 head: rest 
             })];
         },
@@ -493,7 +394,7 @@
             if (!changedValue) {
                 return this;
             } else {
-                return basilisk.collections.ForwardList.from(values);
+                return b.collections.ForwardList.from(values);
             }
         },
 
@@ -518,15 +419,112 @@
     });
 
     // Factory method: given an array-like object or a forward list, return a forward list.
-    basilisk.collections.ForwardList.from = function (source) {
-        if (source instanceof basilisk.collections.ForwardList) {
+    b.collections.ForwardList.from = function (source) {
+        if (source instanceof b.collections.ForwardList) {
             return source;
         } else {
             return _.reduceRight(source, function (memo, value) { 
                 return memo.shift(value);
-            }, new basilisk.collections.ForwardList({ head: null }));
+            }, new b.collections.ForwardList({ head: null }));
         }
     }
+
+
+    // Atoms provide a way to manage shared, synchronous, independent state.
+    // http://clojure.org/atoms
+    //
+    // If supplied the validator must be a function (new, old) {} -> boolean, 
+    // returning true if the changed value is valid, and false if not.
+    //
+    // the value must be immutable.
+    basilisk.Atom = function (initialValue, validator) {
+        if (!this instanceof basilisk.Atom) { throw "Please instantiate each atom separately." }
+
+        // Most state is held in closure, and thus can only be changed by these
+        // privileged methods.
+
+        var current,
+            self = this,
+            // TODO replace with a FixedVector.
+            watchers = b.collections.ForwardList.from([]),
+            // set the value if it passes the validator.
+            _set = function (possible) {
+                var old = current;
+                if (possible !== current) {
+                    if (!validator(possible, current)) {
+                        throw "Value does not pass validator.";
+                    }
+
+                    current = possible;
+
+                    watchers.each(function (watcher) {
+                        try {
+                            watcher(current, old);
+                        } catch (e) {
+                            // do nothing
+                            log("Watcher threw exception: this behaviour is broken.");
+                        }
+                    });
+                }
+                
+                return current;
+            };
+
+        validator = validator || function () { return true; };
+        // we fail immediately if the initial value does not validate.
+
+        _.extend(self, {
+            // Retrieve the current value of the Atom.
+            deref: function () { return current; },
+
+            // Applies the given "change" function to the old state,
+            // checks that the result passes the validator, and updates the current state.
+            // 
+            // Will be called as swapFunction(old, *args);  The function should have no side-effects.
+            //
+            // Returns the new state or throws an exception.
+
+            swap: function (swapFunction) {
+                var possible, args = [current];
+
+                if (arguments.length > 1) {
+                    args.push.apply(args, _.rest(argument));
+                }
+
+                possible = swapFunction.apply(null, args);
+
+                // update current, call watchers
+                return this.compareAndSet(current, possible);
+            },
+
+            // If oldVal matches current, change to using newVal.
+            // return true if changed, false if not changed.
+            compareAndSet: function (oldVal, newVal) {
+                if (oldVal === current) {
+                    return (_set(newVal) === newVal);
+                } else {
+                    return false;
+                }
+            },
+
+            // add a watcher.  Will be called if the value changes.
+            addWatcher: function (watcher) {
+                if (watchers.first(function (compare) { return compare === watcher; }) === undefined) {
+                    watchers = watchers.shift(watcher);
+                }
+            },
+
+            removeWatcher: function (watcher) {
+                watchers = watchers.filter(function (compare) { return compare !== watcher; });
+            }
+        });
+
+        // shorter alias for cas.
+        this.cas = this.compareAndSet;
+
+        // set the initial state.
+        _set(initialValue);
+    };
 
     return basilisk;
 }));
