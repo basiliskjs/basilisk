@@ -516,7 +516,9 @@
 
             removeWatcher: function (watcher) {
                 watchers = watchers.filter(function (compare) { return compare !== watcher; });
-            }
+            },
+
+            watchers: function () { return watchers },
         });
 
         // shorter alias for cas.
