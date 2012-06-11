@@ -1,8 +1,8 @@
 //      Basilisk 0.1 
 //      A simple library for immutable state.
 //      
-//      (c) 2012 Brad Shuttleworth, under a BSD license. 
-//      see http://github.com/shuttlebrad/basilisk
+//      (c) 2012 Moo Print Ltd. under an MIT license
+//      see http://github.com/moodev/basilisk
 
 (function () {
     "use strict";
