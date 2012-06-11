@@ -149,23 +149,23 @@
 
                 if (Object.hasOwnProperty.call(adjustProperties, key)) {
                     rawValue = adjustProperties[key];
+
+                    if (valueFn) { 
+                        value = valueFn(rawValue); 
+                    } else { 
+                        value = rawValue; 
+                    }
+
+                    if (strictEqual) {
+                        changed = changed || !strictEqual(value, self[key]);
+                    } else {
+                        changed = changed || (value !== self[key]);
+                    }
+
+                    sample[key] = value;
                 } else {
-                    rawValue = self[key];
+                    sample[key] = self[key];
                 } 
-
-                if (valueFn) { 
-                    value = valueFn(rawValue); 
-                } else { 
-                    value = rawValue; 
-                }
-
-                if (strictEqual) {
-                    changed = changed || !strictEqual(value, self[key]);
-                } else {
-                    changed = changed || (value !== self[key]);
-                }
-
-                sample[key] = value;
             });
 
             if (!changed) { return self; }
