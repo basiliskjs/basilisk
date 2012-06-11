@@ -45,7 +45,7 @@
         var current,
             self = this,
             // TODO replace with a FixedVector.
-            watchers = [],
+            watchers = basilisk.collections.ForwardList.from([]),
             // set the value if it passes the validator.
             _set = function (possible) {
                 var old = current;
@@ -56,7 +56,7 @@
 
                     current = possible;
 
-                    _.each(watchers.slice(0), function (watcher) {
+                    watchers.each(function (watcher) {
                         try {
                             watcher(current, old);
                         } catch (e) {
@@ -108,13 +108,13 @@
 
             // add a watcher.  Will be called if the value changes.
             addWatcher: function (watcher) {
-                if (_.indexOf(watchers, watcher) === -1) {
-                    watchers.push(watcher);
+                if (watchers.first(function (compare) { return compare === watcher; }) === undefined) {
+                    watchers = watchers.shift(watcher);
                 }
             },
 
             removeWatcher: function (watcher) {
-                watchers = _.without(watchers, watcher);
+                watchers = watchers.filter(function (compare) { return compare !== watcher; });
             }
         });
 
