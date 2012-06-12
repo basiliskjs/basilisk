@@ -67,10 +67,13 @@
         basilisk.isStrict = false;
     }
 
-    // Definitions module.
-    b.definitions = {};
 
-    // Create a struct construcot.
+    // Struct
+    // ------
+    //
+    // Define a constructor for a structure: this is very similar to Python's 
+    // namedtuple module.  The resulting objects are immutable, and have very simple
+    // "withX" methods to allow you to create new objects based on old definitions.
     b.struct = function (properties) {
         var constructor,
             propList = _.extend({}, properties);
@@ -191,6 +194,9 @@
         return constructor;
     };
 
+
+    // Definitions (backwards compatibility)
+    b.definitions = {};
     basilisk.definitions.makeConstructor = b.struct;
 
     // some very simple property objects.  the float value is particularly useful.
@@ -223,6 +229,7 @@
     // will call the "watcher" function with the "stemmed" properties
     // @return fn watching a particular path.
     b.watchers.path = function (path, watcher) {
+        // TODO refactor parts to use a ForwardList
         var parts = path.split('.'),
             // function to extract the specified path from the root.
             // WILL mutate the parts parameter.
@@ -259,6 +266,105 @@
             recur(parts.slice(0, parts.length), newVal, oldVal);
         }
     } 
+
+    // Utility datastructures/objects.
+    // ----
+
+    b.utils = {}
+    b.utils.Path = function (path) {
+        var parts = b.collections.ForwadList.from(path.split('.'));
+
+        // keep the actual parts immutable.
+        this.parts = function () { return parts; };
+    }
+
+    _.extend(b.utils.Path.prototype, {
+        /**
+         * Consume a particular struct.  
+         *
+         * @param struct the basilisk.struct to consume
+         * @param tolerant (true) tolerate the property not being defined, or the struct being undefined
+         * @return the value at the end of the struct, or undefined.
+         */
+        consume: function (struct, tolerant) { 
+            var node = struct,
+                tolerant = !!tolerant;
+
+            if (arguments.length === 1) {
+                tolerant = true;
+            }
+
+            if (struct === undefined  && !tolerant) {
+                throw "Cannot root on undefined struct when not tolerant.";
+            }
+            this.parts().each(function (part) {
+                if (node === undefined) { return; }
+
+                if (!tolerant && !node.hasOwnProperty(part)) {
+                    throw "Cannot find part: " + part;
+                }
+                
+                node = node[part];
+            });
+
+            return node;
+        },
+
+        /**
+         * Derive a new struct from the provided one struct, the current path, and the provided
+         * value to be set at the end of the path.  Relies on each node having with_. Is *not* 
+         * tolerant of a particular path not being present.
+         *
+         * @param struct  the structure to derive from.
+         * @param value   the value to set at the end of the structure.
+         * @param a struct derived from the original, with value set at the end of path.
+         */
+        replace: function (struct, value) { 
+            // TODO this recursive definition should work fine, provided that
+            //      the stack depth is acceptable.  Might be an issue on older IE's and Safari's.
+
+            var reverse = b.collections.ForwardList.from([]),
+                node = struct;
+
+            this.parts().each(function (part) {
+                reverse = reverse.shift([part, node]);
+                if (!node.hasOwnProperty(part)) {
+                    throw "Cannot follow path: node lacks " + part;
+                }
+                node = node[part];
+            });
+
+            // we can now set the value, and then consume in reverse.
+            node = value;
+            reverse.each(function (step) {
+                var part = step[0], 
+                    parent = step[1];
+
+                node = parent.with_({ part: node });
+            });
+
+            return node;
+        },
+
+        /**
+         * Apply the given change function to the value at the end of the path on
+         * the structure, and then return a new structure derived from the provided one.
+         *
+         * @param struct the structure from which to derive.
+         * @param changeFn a function to apply: the first parameter will be the value, the rest will 
+         *              be varags.
+         * @return a new structure, with changes applied by with_
+         */
+        swap: function (struct, changeFn) { 
+            var current = this.consume(struct, false),
+                changeArgs = [current];
+
+            // merge any further arguments.
+            changeArgs.push.apply(changeArgs, Array.prototype.slice.call(arguments, 2));
+
+            return this.replace(struct, changeFn.apply(undefined, changeArgs));
+        }
+    })
 
     // Collections
     // -----------
@@ -527,6 +633,86 @@
         // set the initial state.
         _set(initialValue);
     };
+
+    // Mount
+    // -----
+    //
+    // It is frequently useful to have something like an Atom which represents
+    // some part of a structure.  (eg. user.photos).  Changes to that structure
+    // should be applied to the root structure, and validated there.  Any alterations
+    // then propagate back to this node, and down through *its* watchers.
+
+    b.Mount = function (atom, path_) {
+        var watchers = b.collections.ForwardList.from([]),
+            self = this,
+            path = new b.utils.Path(path_),
+            _watchFn = null;
+
+        if (!(this instanceof b.Mount)) {
+            throw "Must instantiate with new.";
+        }
+
+        // bind some priviledged methods
+        _.extend(self, {
+            // map down to the atom
+            deref: function () { return path_.consume(atom.deref()); },
+
+            swap: function (changeFunction) { 
+                var args = arguments,
+                    self = this;
+                return atom.swap(function (current) {
+                    var finalArgs = [current, changeFunction];
+                    finalArgs.push.apply(finalArgs, _.rest(args));
+                    
+                    return path.swap.apply(path, finalArgs);
+                });
+            },
+
+            compareAndSet: function (oldVal, newVal) {
+                var self = this,
+                    base = atom.deref(),
+                    root = path.consume(base),
+                    adjusted = path.replace(root, newVal);
+
+                if (oldVal === root) {
+                    return (atom.cas(base, adjusted));
+                } else {
+                    return false;
+                }
+            },
+
+            // add a watcher.  Will be called if the value changes.
+            addWatcher: function (watcher) {
+                if (watchers.first(function (compare) { return compare === watcher; }) === undefined) {
+                    watchers = watchers.shift(watcher);
+                }
+            },
+
+            removeWatcher: function (watcher) {
+                watchers = watchers.filter(function (compare) { return compare !== watcher; });
+            },
+
+            watchers: function () { return watchers },
+
+            unmount: function () {
+                if (_watchFn !== null) {
+                    atom.removeWatcher(_watchFn);
+                    _watchFn = null;    
+                }
+            }
+        });
+
+        // finally, bind onto our path
+        _watchFn = b.watchers.path(path_, function (newVal, oldVal) {
+            watchers.each(function (watchFn) {
+                try {
+                    watchFn(newVal, oldVal);
+                } catch (err) {
+                    log("Failure: should not see exception from watch function.", err);
+                }
+            });
+        });
+    }
 
     return basilisk;
 }));
