@@ -272,7 +272,7 @@
 
     b.utils = {}
     b.utils.Path = function (path) {
-        var parts = b.collections.ForwadList.from(path.split('.'));
+        var parts = b.collections.ForwardList.from(path.split('.'));
 
         // keep the actual parts immutable.
         this.parts = function () { return parts; };
@@ -338,9 +338,12 @@
             node = value;
             reverse.each(function (step) {
                 var part = step[0], 
-                    parent = step[1];
+                    parent = step[1],
+                    desc = {};
 
-                node = parent.with_({ part: node });
+                desc[part] = node;
+
+                node = parent.with_(desc);
             });
 
             return node;
