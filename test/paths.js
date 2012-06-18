@@ -119,33 +119,4 @@
 
         strictEqual(eg3.right, undefined, 'replacement with an undefined value should actually apply that change');
     });
-
-    test('mount points', function () {
-        var TreeNode = new b.struct({
-            left: {}, right: {},
-            value: {}
-        }), eg1, eg2, atom, mount;
-
-        eg1 = new TreeNode({
-            value: 'root',
-            left: new TreeNode({
-                value: 'left'
-            })
-        });
-
-        atom = new b.Atom(eg1);
-        mount = new b.Mount(atom, 'left');
-
-        mount.swap(function (current) {  
-            strictEqual(current, eg1.left, 'Mount point should filter received value.');
-            return current.withLeft(new TreeNode({
-                value: 'left.left'
-            }));
-        });
-
-        eg2 = mount.deref();
-
-        // first check *just* that the sub-tree is correct
-        equal(eg2.value, 'left', 'Sub-tree should still have "left" as start value');
-    });
 })();
