@@ -113,6 +113,65 @@
         strictEqual(eg2.x, change2, 'references should be brought in via withX cleanly');
     });
 
+    // Test that value functions are properly used.
+
+    test('value function application', function () {
+        // filter function must be idempotent: this one converts the object to the target format.
+        var YCons = b.definitions.makeConstructor({
+            y: {}
+        }),
+            XCons = b.definitions.makeConstructor({
+            x: { filter: function (value) { 
+                if (value instanceof YCons) {
+                    return value;
+                } else {
+                    return new YCons(value);
+                }
+            }}
+        }), eg1, eg2, eg3;
+
+        eg1 = new YCons({ y: 3 });
+        eg2 = new XCons({ x: eg1 });
+
+        strictEqual(eg2.x, eg1, 'Items should pass through without change in the default case');
+
+        eg2 = new XCons({ x: { y: 4 } });
+        notStrictEqual(eg2.x, eg1, 'But not via identity mapping.');
+        strictEqual(eg2.x.y, 4, 'Should still bring items in');
+        ok(eg2.x instanceof YCons, 'Filter function result should be passed through.');
+    });
+
+    test('with_ makes no change if property is identical', function () {
+        var Cons = b.definitions.makeConstructor({
+            x: {}
+        }), eg1, eg2, common = {};
+
+        eg1 = new Cons({
+            x: common
+        });
+        eg2 = eg1.withX(common);
+
+        strictEqual(eg2, eg1, 'If there is no change, apply no change.');
+    });
+
+    test('with_ honours strictEqual function', function () {
+        var Cons = b.definitions.makeConstructor({
+            x: { strictEqual: function (a, b) { return a > b } }
+        }), eg1, eg2;
+
+        eg1 = new Cons({
+            x: 3
+        });
+        
+        eg2 = eg1.withX(5);
+
+        strictEqual(eg2, eg1, 'No change according to comparison function.');
+
+        eg2 = eg1.withX(1);
+
+        notStrictEqual(eg2, eg1, 'Changed according to function.');
+    });
+
     // we have slightly different tests for ES5 compliant versions, and non-ES5 compliant versions.
     if (properStrict) {
         module('ES5 Strict, basilisk.definitions');

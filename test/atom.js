@@ -107,7 +107,7 @@ test('atom watcher should be called for valid, changing events', function () {
 
     atom = new basilisk.Atom(o1);
 
-    expect(2);
+    expect(4);
 
     // we expect to be called with the newVal and the oldVal, including on setup.
     atom.addWatcher(function (newVal, oldVal) {
@@ -117,13 +117,9 @@ test('atom watcher should be called for valid, changing events', function () {
 
     atom.swap(function () { return o2; });
 
-    expect(0);
-
     // we should NOT be called now.
 
     atom.swap(function () { return o2; });
-
-    expect(2);
 
     atom = new basilisk.Atom(o1, function (newVal, oldVal) { return newVal !== o3; });
     atom.addWatcher(function () { ok(false, 'should not be called if validator fails.'); } );
