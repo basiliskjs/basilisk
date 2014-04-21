@@ -93,10 +93,10 @@ describe("Vector suite", function () {
 
     });
 
-    describe("Replace behaviour", function () {
+    describe("Set behaviour", function () {
         it("Can have a particular item replaced.", function () {
             var sample = vectorOfThree(),
-                result = sample.replace(1, new Sample({ name: "d" }));
+                result = sample.set(1, new Sample({ name: "d" }));
 
             expect(sample).not.toBe(result);
             expect(result.length).toBe(3);
@@ -109,7 +109,7 @@ describe("Vector suite", function () {
 
         it("Strictly identical replace is an identity function.", function () {
             var sample = vectorOfThree(),
-                result = sample.replace(1, sample.get(1));
+                result = sample.set(1, sample.get(1));
 
             expect(sample).toBe(result);
         });

@@ -208,11 +208,15 @@ export class Vector<T> {
      * Retrieve the object at a particular index. Raises
      */
     public get(index:number):T {
+        if (typeof index !== "number") {
+            throw "Cannot index a vector with anything other than a number.";
+        }
+
         if (index < 0) {
             index = this.length + index;
         }
 
-        if (index > this.length) {
+        if (index > this.length || index < 0) {
             throw "Out of bounds for Vector";
         }
 
@@ -222,9 +226,18 @@ export class Vector<T> {
     /**
      * Create a new vector, with the specified index replaced within the object.
      */
-    public replace(index:number, value:T):Vector<T> {
+    public set(index:number, value:T):Vector<T> {
+        // this will check that we have been indexed by a number.
         if (equals(this.get(index), value)) {
             return this;
+        }
+
+        if (index < 0) {
+            index = this.length + index;
+        }
+
+        if (index >= this.length || index < 0) {
+            throw "Out of bounds";
         }
 
         var adjusted = this.instance.slice();
@@ -431,7 +444,7 @@ export class StringMap<T> {
  * way.  Key to this is (a) the ability to descend the object tree, and (b) to know how to effect
  * a change.
  *
- * EXPERIIMENTAL: The API for the Q module is very likely to change.
+ * EXPERIIMENTAL: The API for the Q module is **very** likely to change.
  */
 export module q {
     export function swap(root:any, path:any[], change:(obj:any) => any):any {
@@ -468,31 +481,19 @@ export module q {
     export function at(key:any):Swapper {
         return {
             current: function (root) {
-                if (root instanceof Vector) {
-                    if (typeof key !== 'number') {
-                        throw "Must provide a numeric key for a vector object.";
-                    }
+                if (root instanceof Vector || root instanceof StringMap) {
                     return root.get(key);
-                } else if (root instanceof StringMap) {
-                    if (typeof key !== 'string') {
-                        throw "Must provide a string key for a StringMap object.";
-                    }
+                } else if (typeof root.get === 'function' && typeof root.set === 'function') {
                     return root.get(key);
                 } else {
                     throw "Cannot apply at() to type " + typeof root + ' on ' + root;
                 }
             },
             replace: function (root, value) {
-                if (root instanceof Vector) {
-                    if (typeof key!== 'number') {
-                        throw "Must provide a numeric key for a vector object.";
-                    }
-                    return root.replace(key, value);
-                } else if (root instanceof StringMap) {
-                    if (typeof key!== 'string') {
-                        throw "Must provide a string key for a StringMap object.";
-                    }
+                if (root instanceof Vector || root instanceof StringMap) {
                     return root.set(key, value);
+                } else if (typeof root.get === 'function' && typeof root.set === 'function') {
+                    return root.get(key);
                 } else {
                     throw "Cannot apply at() to type " + typeof root + ' on ' + root;
                 }
