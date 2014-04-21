@@ -447,6 +447,7 @@ export class StringMap<T> {
  * EXPERIIMENTAL: The API for the Q module is **very** likely to change.
  */
 export module q {
+
     export function swap(root:any, path:any[], change:(obj:any) => any):any {
         if (path.length === 0) {
             return change(root);
@@ -478,6 +479,9 @@ export module q {
     /**
      * Swapper function for a StringMap or Vector object.  Will inspect
      */
+    export function at(key:string):Swapper;
+    export function at(key:number):Swapper;
+
     export function at(key:any):Swapper {
         return {
             current: function (root) {
@@ -500,8 +504,6 @@ export module q {
             }
         };
     }
-
-
 
     export interface Swapper {
         current(root:any):any;

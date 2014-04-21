@@ -19,5 +19,3 @@ Datastructures
 
 Query
 -----
-
-* Paths should probably be chainable in some way.  Try out a few APIs to see which work.
