@@ -507,8 +507,12 @@ export module q {
         }
     }
 
-    export function swap(root:any, pathParts:any[], change:(obj:any) => any):any {
+    export function swap<T>(root:T, pathParts:any[], change:(obj:any) => any):T {
         return path.apply(null, pathParts).swap(root, change);
+    }
+
+    export function replace<T>(root:T, pathParts:any[], value:any):T {
+        return path.apply(null, pathParts).replace(root, value);
     }
 
     /**
@@ -519,7 +523,7 @@ export module q {
     export function at(key:number):PathSegment;
 
     export function at(key:any):PathSegment {
-        return {
+        return Object.freeze({
             current: function (root) {
                 if (root instanceof Vector || root instanceof StringMap) {
                     return root.get(key);
@@ -538,7 +542,7 @@ export module q {
                     throw "Cannot apply at() to type " + typeof root + ' on ' + root;
                 }
             }
-        };
+        });
     }
 
     /**
@@ -547,7 +551,7 @@ export module q {
      * @returns {PathSegment}
      */
     export function prop(propName:string):PathSegment {
-        return {
+        return Object.freeze({
             current: function (root) {
                 if (typeof root.with_ !== 'function') {
                     throw "Can only use prop segments on structs.";
@@ -560,7 +564,7 @@ export module q {
             replace: function (root, value) {
                 return root.with_(propName, value);
             }
-        }
+        });
     }
 
     export interface PathSegment {

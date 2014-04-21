@@ -125,10 +125,5 @@ describe("Query module (Q)", function () {
             expect(q.path(q.at(0)).value(base)).toBe('idx 0');
             expect(q.path(q.at(1)).value(base)).toBe('idx 1');
         });
-
-        it("Can mix at and prop.", function () {
-            var base = new basilisk.Vector<Simple>(['idx 0', 'idx 1']);
-
-        });
     });
 });
