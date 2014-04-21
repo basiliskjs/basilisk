@@ -1,8 +1,0 @@
-TODO
-====
-
-General
--------
-
-* AMD support
-
