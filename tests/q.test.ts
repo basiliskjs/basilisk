@@ -100,4 +100,35 @@ describe("Query module (Q)", function () {
             expect(result.b.get(1).a).toBe('changed');
         });
     });
+
+    describe("propName swapper", function () {
+        it("Should extract the property value.", function () {
+            var base = new Simple({ a: 'prop a', b: 'prop b' });
+
+            expect(q.prop('a').current(base)).toBe('prop a');
+            expect(q.prop('a').replace(base, 'bob').a).toBe('bob');
+
+        });
+    });
+
+    describe("path objects.", function () {
+        it("Providing a string value will let you extract a single property", function () {
+            var base = new Simple({ a: 'prop a', b: new Simple({a: 'nested a', b: 'nested b'})});
+
+            expect(q.path('a').value(base)).toBe('prop a');
+            expect(q.path('b', 'a').value(base)).toBe('nested a');
+        });
+
+        it("Vectors can be searched too.", function () {
+            var base = new basilisk.Vector<string>(['idx 0', 'idx 1']);
+
+            expect(q.path(q.at(0)).value(base)).toBe('idx 0');
+            expect(q.path(q.at(1)).value(base)).toBe('idx 1');
+        });
+
+        it("Can mix at and prop.", function () {
+            var base = new basilisk.Vector<Simple>(['idx 0', 'idx 1']);
+
+        });
+    });
 });

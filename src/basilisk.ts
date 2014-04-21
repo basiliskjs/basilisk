@@ -447,42 +447,78 @@ export class StringMap<T> {
  * EXPERIIMENTAL: The API for the Q module is **very** likely to change.
  */
 export module q {
-
-    export function swap(root:any, path:any[], change:(obj:any) => any):any {
-        if (path.length === 0) {
-            return change(root);
-        }
-
-        // path must be longer than one: our task is to identify how to step one deeper, and apply
-        // the result to that item.
-        var step = path[0];
-
-        if (typeof step === 'string') {
-            // root should be a struct.
-            if (typeof root.with_ !== 'function') {
-                throw "String path step requires a struct - must have with_ - is " + (typeof root.with_);
-            }
-
-            return root.with_(step, swap(root[step], path.slice(1), change));
-        } else if (typeof step === typeof {}) {
-            if (typeof step.current !== 'function' || typeof step.replace !== 'function') {
-                throw "Objects in the path must have 'current' and 'replace' functions.";
-            }
-
-            var updated = swap(step.current(root), path.slice(1), change);
-            return step.replace(root, updated);
-        }
-
-        throw "Cannot use path step: " + step;
+    export interface Path {
+        swap<T>(root:T, change:(obj:any) => any):T;
+        value(root:any):any;
+        replace<T>(root:T, value:any):T;
     }
 
     /**
-     * Swapper function for a StringMap or Vector object.  Will inspect
+     * For a given set of path segments (strings or Swappers)
+     * @param parts
      */
-    export function at(key:string):Swapper;
-    export function at(key:number):Swapper;
+    export function path(... parts:any[]):Path {
+        var actual:PathSegment[] = [];
 
-    export function at(key:any):Swapper {
+        parts.forEach(function (part:any) {
+            if (typeof part === 'string') {
+                actual.push(prop(part));
+
+            } else if (typeof part.current === 'function' && typeof part.replace === 'function') {
+                actual.push(part);
+            } else {
+                throw "Each part must be a path segment: " + part;
+            }
+        });
+
+        return new SimplePath(new Vector(actual));
+    }
+
+    class SimplePath implements Path {
+        constructor(inner:Vector<PathSegment>) {
+            this.inner = inner;
+            Object.freeze(this);
+        }
+
+        public inner:Vector<PathSegment>;
+
+        public swap<T>(root:T, change:(obj:any) => any):T {
+            var recurSwap = (idx:number, current:any) => {
+                if (idx === this.inner.length) {
+                    return change(current);
+                } else {
+                    var changed = recurSwap(idx + 1, this.inner.get(idx).current(current));
+                    return this.inner.get(idx).replace(current, changed);
+                }
+            };
+            return recurSwap(0, root);
+        }
+
+        public value(root:any):any {
+            var last = root;
+            this.inner.forEach((segment:PathSegment) => {
+                last = segment.current(last);
+            });
+            return last;
+        }
+
+        public replace<T>(root:T, value:any):T {
+            return this.swap(root, function () { return value; });
+        }
+    }
+
+    export function swap(root:any, pathParts:any[], change:(obj:any) => any):any {
+        return path.apply(null, pathParts).swap(root, change);
+    }
+
+    /**
+     * PathSegment function for a StringMap or Vector object.  Will inspect the current root and
+     * descend based on the provided key.
+     */
+    export function at(key:string):PathSegment;
+    export function at(key:number):PathSegment;
+
+    export function at(key:any):PathSegment {
         return {
             current: function (root) {
                 if (root instanceof Vector || root instanceof StringMap) {
@@ -505,7 +541,29 @@ export module q {
         };
     }
 
-    export interface Swapper {
+    /**
+     * Generate a prop
+     * @param propName
+     * @returns {PathSegment}
+     */
+    export function prop(propName:string):PathSegment {
+        return {
+            current: function (root) {
+                if (typeof root.with_ !== 'function') {
+                    throw "Can only use prop segments on structs.";
+                } else if (!root.hasOwnProperty(propName)) {
+                    throw "Object does not have property by name of propName";
+                }
+
+                return root[propName];
+            },
+            replace: function (root, value) {
+                return root.with_(propName, value);
+            }
+        }
+    }
+
+    export interface PathSegment {
         current(root:any):any;
         replace(root:any, value:any):any;
     }
