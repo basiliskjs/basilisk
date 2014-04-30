@@ -22,7 +22,7 @@ export module ts {
      */
     export class Struct {
         constructor() {
-            Object.freeze(this);
+            freeze(this);
         }
 
         /**
@@ -33,14 +33,15 @@ export module ts {
          * @param propValue the value to replace.
          */
         public with_(propName:string, propValue:any):Struct {
-            var altered = {};
+            var altered = {},
+                Maker:{ new(prop:any):Struct } = <{ new(prop:any):Struct }> this.constructor;
             for (var prop in this) {
-                if (this.hasOwnProperty(prop)) {
+                if (hasProp(this, prop)) {
                     altered[prop] = this[prop];
                 }
             }
             altered[propName] = propValue;
-            return new (Object.getPrototypeOf(this).constructor)(altered);
+            return new Maker(altered);
         }
     }
 }
@@ -104,7 +105,7 @@ export function makestruct(baseProps:Array<string>, includeEquals:boolean = true
         for (var i=0; i<props.length; i++) {
             this[props[i]] = opts[props[i]];
         }
-        Object.freeze(this);
+        freeze(this);
     };
 
     for (i=0; i<props.length; i++) {
@@ -146,7 +147,7 @@ export function makestruct(baseProps:Array<string>, includeEquals:boolean = true
             }
 
             // we we
-            if (Object.getPrototypeOf(this) === Object.getPrototypeOf(other)) {
+            if (sameType(this, other)) {
                 for (var i=0; i<baseProps.length; i++) {
                     if (!equals(this[baseProps[i]], other[baseProps[i]])) {
                         return false;
@@ -190,8 +191,8 @@ export class Vector<T> {
 
         this.length = this.instance.length;
 
-        Object.freeze(this.instance);
-        Object.freeze(this);
+        freeze(this.instance);
+        freeze(this);
     }
 
     private instance:Array<T>;
@@ -298,7 +299,7 @@ export class Vector<T> {
         }
 
         // case where it is a vector.
-        if (Object.getPrototypeOf(this) === Object.getPrototypeOf(other)) {
+        if (sameType(this, other)) {
             // must be an Array<T>
             for (var i=0; i < this.instance.length; i++) {
                 if (!equals(other.instance[i], this.instance[i])) {
@@ -318,12 +319,12 @@ export class Vector<T> {
  * the underlying API.
  */
 export class StringMap<T> {
-    constructor(sample:StringMap<T>)
-    constructor(sample:any)
+    constructor(sample:StringMap<T>);
+    constructor(sample:any);
     // @private a (to-be-deprecated) internal-use constructor which makes a StringMap out of
     // a constructor.
     constructor(sample:any, rawInstance:any)
-    constructor()
+    constructor();
 
     constructor(sample?:StringMap<T>, cloneable:any = undefined) {
         var inst = {};
@@ -331,20 +332,20 @@ export class StringMap<T> {
         if ((sample === null || sample === undefined) && cloneable !== undefined) {
             inst = cloneable;
         } else if (sample !== null && sample !== undefined) {
-            if (Object.getPrototypeOf(sample) === Object.getPrototypeOf(this)) {
+            if (sameType(sample, this)) {
                 inst = sample.instance;
             } else {
                 for (var k in sample) {
-                    if (sample.hasOwnProperty(k)) {
+                    if (hasProp(sample, k)) {
                         inst[this.convertKey(k)] = sample[k];
                     }
                 }
             }
         }
 
-        Object.freeze(inst);
+        freeze(inst);
         this.instance = inst;
-        Object.freeze(this);
+        freeze(this);
     }
 
     private instance:Object;
@@ -352,7 +353,7 @@ export class StringMap<T> {
     public get(key:string, default_:T = null):T {
         var actualKey:string = this.convertKey(key);
 
-        if (this.instance.hasOwnProperty(actualKey)) {
+        if (hasProp(this.instance, actualKey)) {
             return this.instance[actualKey];
         }
         return default_;
@@ -364,7 +365,7 @@ export class StringMap<T> {
             return this;
         }
         for (var prop in this.instance) {
-            if (this.instance.hasOwnProperty(prop)) {
+            if (hasProp(this.instance, prop)) {
                 altered[prop] = this.instance[prop];
             }
         }
@@ -375,7 +376,7 @@ export class StringMap<T> {
     }
 
     public has(key:string):boolean {
-        return this.instance.hasOwnProperty(this.convertKey(key));
+        return hasProp(this.instance, this.convertKey(key));
     }
 
     public remove(key:string):StringMap<T> {
@@ -383,7 +384,7 @@ export class StringMap<T> {
             actualKey = this.convertKey(key);
 
         for (var prop in this.instance) {
-            if (this.instance.hasOwnProperty(prop)) {
+            if (hasProp(this.instance, prop)) {
                 if (prop !== actualKey) {
                     altered[prop] = this.instance[prop];
                 }
@@ -395,7 +396,7 @@ export class StringMap<T> {
 
     public forEach(fn:(value:T, key:string, map:StringMap<T>) => any, context:any = undefined):void {
         for (var prop in this.instance) {
-            if (this.instance.hasOwnProperty(prop)) {
+            if (hasProp(this.instance, prop)) {
                 fn.call(context, this.instance[prop], this.reverseKey(prop), this);
             }
         }
@@ -440,11 +441,9 @@ export class StringMap<T> {
 }
 
 /**
- * The q module allows you to modify complex persistent structures in a fairly simple-to-understand
+ * The q module allows you to modify complex persistent structures in a simple way.
  * way.  Key to this is (a) the ability to descend the object tree, and (b) to know how to effect
  * a change.
- *
- * EXPERIIMENTAL: The API for the Q module is **very** likely to change.
  */
 export module q {
     export interface Path {
@@ -477,7 +476,7 @@ export module q {
     class SimplePath implements Path {
         constructor(inner:Vector<PathSegment>) {
             this.inner = inner;
-            Object.freeze(this);
+            freeze(this);
         }
 
         public inner:Vector<PathSegment>;
@@ -523,7 +522,7 @@ export module q {
     export function at(key:number):PathSegment;
 
     export function at(key:any):PathSegment {
-        return Object.freeze({
+        return freeze({
             current: function (root) {
                 if (root instanceof Vector || root instanceof StringMap) {
                     return root.get(key);
@@ -551,11 +550,11 @@ export module q {
      * @returns {PathSegment}
      */
     export function prop(propName:string):PathSegment {
-        return Object.freeze({
+        return freeze({
             current: function (root) {
                 if (typeof root.with_ !== 'function') {
                     throw "Can only use prop segments on structs.";
-                } else if (!root.hasOwnProperty(propName)) {
+                } else if (!hasProp(root, propName)) {
                     throw "Object does not have property by name of propName";
                 }
 
@@ -572,3 +571,21 @@ export module q {
         replace(root:any, value:any):any;
     }
 }
+
+// internal shims for a few es5 functions which we cannot reasonably expect people to shim.
+var freeze = (obj:any):any => { return (Object.freeze) ? Object.freeze(obj) : obj; },
+    hasProp = function (obj, prop):boolean { return Object.hasOwnProperty.call(obj, prop); },
+    // loosely identify if objects have the same type, mainly used for basilisk-originated objects.
+    // returns false if both are null or undefined
+    sameType = function (a:any, b:any):Boolean {
+
+        if (a === null || b === null || a === undefined || b === undefined) {
+            return false;
+        }
+
+        if (a.constructor === undefined || b.constructor  === undefined) {
+            return false;
+        }
+
+        return a.constructor === b.constructor;
+    };
