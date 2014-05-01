@@ -328,7 +328,10 @@ export class Vector<T> {
  */
 export class StringMap<T> {
     // @private
-    constructor(inst:any = undefined) {
+    constructor(ignore:any, inst:any) {
+        if (ignore !== undefined) {
+            throw "TypeError: StringMap constructor is private - use .from() to create new instances."
+        }
         this.instance = inst;
         freeze(this);
     }
@@ -353,7 +356,7 @@ export class StringMap<T> {
             throw "TypeError: invalid object";
         }
 
-        return new StringMap(inst);
+        return new StringMap(undefined, inst);
     }
 
     private instance:Object;
@@ -380,7 +383,7 @@ export class StringMap<T> {
         altered[sm.convertKey(key)] = value;
 
         // Cheat, knowing that we will use the "instance" property.
-        return new StringMap<T>(altered);
+        return new StringMap<T>(undefined, altered);
     }
 
     public has(key:string):boolean {
@@ -399,7 +402,7 @@ export class StringMap<T> {
             }
         }
 
-        return new StringMap<T>(altered);
+        return new StringMap<T>(undefined, altered);
     }
 
     public forEach(fn:(value:T, key:string, map:StringMap<T>) => any, context:any = undefined):void {
