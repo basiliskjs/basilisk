@@ -35,26 +35,26 @@ class Sample extends basilisk.ts.Struct {
 }
 
 function mapOfThree():SM<Sample> {
-    var a = new Sample({ name: "a" }),
-        b = new Sample({ name: "b" }),
-        c = new Sample({ name: "c" });
-
-    return new SM<Sample>([a, b, c]);
+    return SM.from({
+        'a': new Sample({ name: 'a'}),
+        'b': new Sample({ name: 'b'}),
+        'c': new Sample({ name: 'c'})
+    });
 }
 
-describe("StringMap suite", function () {
+describe("StringMap", function () {
 
     function mapOfThree ():SM<Sample> {
-        return new SM<Sample>({
+        return SM.from({
             'a': new Sample({ name: 'a'}),
             'b': new Sample({ name: 'b'}),
             'c': new Sample({ name: 'c'})
         });
     }
 
-    describe("Constructor tests", function () {
+    describe(".from", function () {
         it("Can be constructed from a simple hash.", function () {
-            var sample = new SM<Sample>({
+            var sample = SM.from({
                 'a': new Sample({ name: 'a'}),
                 'b': new Sample({ name: 'b'})
             });
@@ -67,11 +67,11 @@ describe("StringMap suite", function () {
         });
 
         it("Can be constructed from another StringMap", function () {
-            var sample = new SM<Sample>({
+            var sample = SM.from({
                 'a': new Sample({ name: 'a'}),
                 'b': new Sample({ name: 'b'})
             }),
-                alt = new SM<Sample>(sample);
+                alt = SM.from(sample);
 
             expect(sample).not.toBe(alt);
             expect(sample.get('a')).toBe(alt.get('a'));
@@ -145,7 +145,7 @@ describe("StringMap suite", function () {
 
     describe("Equality functionality", function () {
         it("Should be equal to itself", function () {
-            var m = new basilisk.StringMap<string>({
+            var m = basilisk.StringMap.from({
                 'a': 'test'
             });
 
@@ -153,21 +153,20 @@ describe("StringMap suite", function () {
         });
 
         it("Should not be equal if a key is different.", function () {
-            var a = new basilisk.StringMap<string>({
+            var a = basilisk.StringMap.from<string>({
                 'a': 'test'
-            }), b = new basilisk.StringMap<string>({
+            }), b = basilisk.StringMap.from<string>({
                     'a': 'different'
-                })
-                ;
+                });
 
             expect(a.equals(b)).toBe(false);
         });
 
 
         it("Should not be equal if an extra key is present in other.", function () {
-            var a = new basilisk.StringMap<string>({
+            var a = basilisk.StringMap.from<string>({
                     'a': 'test'
-                }), b = new basilisk.StringMap<string>({
+                }), b = basilisk.StringMap.from<string>({
                     'a': 'test',
                     'b': 'different'
                 })
@@ -177,24 +176,24 @@ describe("StringMap suite", function () {
         });
 
         it("Should be equal across multiple items.", function () {
-            var a = new basilisk.StringMap<string>({
+            var a = basilisk.StringMap.from<string>({
                     'a': 'test',
                     'b': 'same'
-                }), b = new basilisk.StringMap<string>({
+                }),
+                b = basilisk.StringMap.from<string>({
                     'a': 'test',
                     'b': 'same'
-                })
-                ;
+                });
 
             expect(a.equals(b)).toBe(true);
         });
 
 
         it("Should be equal for complex children with equality defined.", function () {
-            var a = new basilisk.StringMap<Sample>({
-                    'a': new Sample({ name: 'test' }),
+            var a = basilisk.StringMap.from({
+                    'a': new Sample({ name: 'test' })
                 }),
-                b = new basilisk.StringMap<string>({
+                b = basilisk.StringMap.from<string>({
                     'a': new Sample({ name: 'test' })
                 });
 
@@ -204,7 +203,7 @@ describe("StringMap suite", function () {
 
     describe("Remove functionality", function () {
         it("Should remove keys if they are present.", function () {
-            var sample = new basilisk.StringMap({
+            var sample = basilisk.StringMap.from<string>({
                 'a': 'hello',
                 'b': 'goodbye'
             }),

@@ -319,39 +319,39 @@ export class Vector<T> {
  * the underlying API.
  */
 export class StringMap<T> {
-    constructor(sample:StringMap<T>);
-    constructor(sample:any);
-    // @private a (to-be-deprecated) internal-use constructor which makes a StringMap out of
-    // a constructor.
-    constructor(sample:any, rawInstance:any)
-    constructor();
+    // @private
+    constructor(inst:any = undefined) {
+        this.instance = inst;
+        freeze(this);
+    }
 
-    constructor(sample?:StringMap<T>, cloneable:any = undefined) {
+    public static from<T>(sample:StringMap<T>);
+    public static from<T>(sample:any);
+
+    public static from<T>(sample:any) {
         var inst = {};
 
-        if ((sample === null || sample === undefined) && cloneable !== undefined) {
-            inst = cloneable;
-        } else if (sample !== null && sample !== undefined) {
-            if (sameType(sample, this)) {
+        if (sample !== null && sample !== undefined) {
+            if (sample instanceof StringMap) {
                 inst = sample.instance;
             } else {
                 for (var k in sample) {
                     if (hasProp(sample, k)) {
-                        inst[this.convertKey(k)] = sample[k];
+                        inst[sm.convertKey(k)] = sample[k];
                     }
                 }
             }
+        } else {
+            throw "TypeError: invalid object";
         }
 
-        freeze(inst);
-        this.instance = inst;
-        freeze(this);
+        return new StringMap(inst);
     }
 
     private instance:Object;
 
     public get(key:string, default_:T = null):T {
-        var actualKey:string = this.convertKey(key);
+        var actualKey:string = sm.convertKey(key);
 
         if (hasProp(this.instance, actualKey)) {
             return this.instance[actualKey];
@@ -369,19 +369,19 @@ export class StringMap<T> {
                 altered[prop] = this.instance[prop];
             }
         }
-        altered[this.convertKey(key)] = value;
+        altered[sm.convertKey(key)] = value;
 
         // Cheat, knowing that we will use the "instance" property.
-        return new StringMap<T>(null, altered);
+        return new StringMap<T>(altered);
     }
 
     public has(key:string):boolean {
-        return hasProp(this.instance, this.convertKey(key));
+        return hasProp(this.instance, sm.convertKey(key));
     }
 
     public remove(key:string):StringMap<T> {
         var altered = {},
-            actualKey = this.convertKey(key);
+            actualKey = sm.convertKey(key);
 
         for (var prop in this.instance) {
             if (hasProp(this.instance, prop)) {
@@ -391,23 +391,16 @@ export class StringMap<T> {
             }
         }
 
-        return new StringMap<T>(null, altered);
+        return new StringMap<T>(altered);
     }
 
     public forEach(fn:(value:T, key:string, map:StringMap<T>) => any, context:any = undefined):void {
         for (var prop in this.instance) {
             if (hasProp(this.instance, prop)) {
-                fn.call(context, this.instance[prop], this.reverseKey(prop), this);
+                fn.call(context, this.instance[prop], sm.reverseKey(prop), this);
             }
         }
     }
-
-    // we cannot directly store strings in the map, without first mangling them.
-    // otherwise, a string of __proto__ could horribly break the object.
-    //
-    // we mangle at the end, because i *assume* that prefixes are quick to check.
-    private convertKey(key:string):string { return key + '___'; }
-    private reverseKey(key:string):string { return key.substr(0, key.length - 3); }
 
     // Equality for StringMaps is defined as being a StringMap with the same keys, and for each
     // key the value must be equals().
@@ -438,6 +431,11 @@ export class StringMap<T> {
 
         return true;
     }
+}
+
+module sm {
+    export function convertKey(key:string):string { return key + '___'; }
+    export function reverseKey(key:string):string { return key.substr(0, key.length - 3); }
 }
 
 /**
