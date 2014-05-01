@@ -68,7 +68,7 @@ describe("Query module (Q)", function () {
 
     describe("at swapper", function () {
         it("Should do a numeric key check for a vector.", function () {
-            var base = new basilisk.Vector<number>([2, 4, 6]),
+            var base = basilisk.Vector.from([2, 4, 6]),
                 calls = 0,
                 result;
 
@@ -79,13 +79,13 @@ describe("Query module (Q)", function () {
             });
 
             expect(calls).toBe(1);
-            expect(result.equals(new basilisk.Vector([2, 8, 6]))).toBe(true);
+            expect(result.equals(basilisk.Vector.from([2, 8, 6]))).toBe(true);
         });
 
         it("Should be possible to mix vectors and objects.", function () {
             var base = new Simple({
                 'a': 'hello',
-                'b': new basilisk.Vector<any>([
+                'b': basilisk.Vector.from([
                     new Simple({ a: 'index0a', b: 'index0b'}),
                     new Simple({ a: 'index1a', b: 'index1b'})
                 ])
@@ -120,7 +120,7 @@ describe("Query module (Q)", function () {
         });
 
         it("Vectors can be searched too.", function () {
-            var base = new basilisk.Vector<string>(['idx 0', 'idx 1']);
+            var base = basilisk.Vector.from<string>(['idx 0', 'idx 1']);
 
             expect(q.path(q.at(0)).value(base)).toBe('idx 0');
             expect(q.path(q.at(1)).value(base)).toBe('idx 1');

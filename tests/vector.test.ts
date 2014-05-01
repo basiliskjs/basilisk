@@ -23,11 +23,11 @@ function vectorOfThree():V<Sample> {
         b = new Sample({ name: "b" }),
         c = new Sample({ name: "c" });
 
-    return new V<Sample>([a, b, c]);
+    return V.from<Sample>([a, b, c]);
 }
 
-describe("Vector suite", function () {
-    describe("Constructor behaviour", function () {
+describe("Vector", function () {
+    describe(".from", function () {
         it("Can be instantiated with a simple array, and has correct length.", function () {
             var sample:V<Sample> = vectorOfThree();
             expect(sample.length).toBe(3);
@@ -53,9 +53,7 @@ describe("Vector suite", function () {
 
         it("Can be created from another vector.", function () {
             var sample = vectorOfThree(),
-                created = new V(sample);
-
-            expect(sample).not.toBe(created);
+                created = V.from(sample);
 
             expect(created.get(0)).toEqual(jasmine.objectContaining({ name: 'a' }));
             expect(created.get(1)).toEqual(jasmine.objectContaining({ name: 'b' }));
@@ -64,13 +62,13 @@ describe("Vector suite", function () {
         });
 
         it("Can be created empty.", function () {
-            var sample = new V([]);
+            var sample = V.from([]);
 
             expect(sample.length).toBe(0);
         });
     });
 
-    describe("forEach behaviour", function () {
+    describe(".forEach", function () {
         it("Can be iterated with forEach", function () {
             var sample = vectorOfThree(),
                 count = 0,
@@ -93,7 +91,7 @@ describe("Vector suite", function () {
 
     });
 
-    describe("Set behaviour", function () {
+    describe(".set", function () {
         it("Can have a particular item replaced.", function () {
             var sample = vectorOfThree(),
                 result = sample.set(1, new Sample({ name: "d" }));
@@ -115,7 +113,7 @@ describe("Vector suite", function () {
         });
     });
 
-    describe("Filter behaviour", function () {
+    describe(".filter", function () {
         it("Only items for which we return true will be included in the filter. ", function () {
             var sample = vectorOfThree(),
                 callCount = 0;
@@ -135,7 +133,7 @@ describe("Vector suite", function () {
         // TODO test that later items are correctly removed.
     });
 
-    describe("Find behaviour", function () {
+    describe(".find", function () {
         it("Should be able to call find with a search function.", function () {
             var sample = vectorOfThree(),
                 callCount = 0;
@@ -151,7 +149,7 @@ describe("Vector suite", function () {
         // TODO test search
     });
 
-    describe("Map behaviour", function () {
+    describe(".map", function () {
         it("Should be able to call find with a search function.", function () {
             var sample = vectorOfThree(),
                 callCount = 0;

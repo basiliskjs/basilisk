@@ -171,38 +171,46 @@ export function makestruct(baseProps:Array<string>, includeEquals:boolean = true
  * perform very badly for non-trivial data sizes.
  */
 export class Vector<T> {
-    constructor(sample:Vector<T>)
-    constructor(sample:Array<T>)
-
-    constructor(sample:any = null) {
-        var ref:Array<T>;
-
-        if (sample == null) {
-            ref = [];
-        } else if (sample instanceof Vector) {
-            ref = (<Vector<T>> sample).instance;
-        } else if (typeof sample.forEach == 'function') {
-            ref = [];
-            sample.forEach(function (val:T) {
-                ref.push(val);
-            });
+    // @private
+    constructor(ignored:any, ref:Array<T>) {
+        if (ignored !== undefined) {
+            throw "TypeError: Vector constructor is private: please use Vector.from()";
         }
-        this.instance = ref;
 
+        this.instance = ref;
         this.length = this.instance.length;
 
         freeze(this.instance);
         freeze(this);
     }
 
-    private instance:Array<T>;
+    public static from<T>(sample:Vector<T>):Vector<T>;
+    public static from<T>(sample:Array<T>):Vector<T>;
 
+    public static from<T>(sample:any):Vector<T> {
+        var ref:Array<T>;
+
+        if (sample == null) {
+            ref = freeze([]);
+        } else if (sample instanceof Vector) {
+            return sample;
+        } else if (typeof sample.forEach == 'function') {
+            ref = [];
+            sample.forEach(function (val:T) {
+                ref.push(val);
+            });
+            freeze(ref);
+        }
+        return new Vector(undefined, ref);
+    }
+
+    private instance:Array<T>;
     public length:number;
 
     public append(value:T):Vector<T> {
         var copy = this.instance.slice();
         copy.push(value);
-        return new Vector<T>(copy);
+        return new Vector<T>(undefined, freeze(copy));
     }
 
     /**
@@ -243,7 +251,7 @@ export class Vector<T> {
 
         var adjusted = this.instance.slice();
         adjusted[index] = value;
-        return new Vector<T>(adjusted);
+        return new Vector<T>(undefined, freeze(adjusted));
     }
 
     public forEach(fn:(value:T, index:number, vect:Vector<T>) => any, context:any = null):void {
@@ -259,7 +267,7 @@ export class Vector<T> {
                 replacement.push(this.instance[i]);
             }
         }
-        return new Vector<T>(replacement);
+        return new Vector<T>(undefined, freeze(replacement));
     }
 
     public find(fn:(value:T, index:number, vect:Vector<T>) => boolean, context:any = null):T {
@@ -272,17 +280,17 @@ export class Vector<T> {
     }
 
     // We cannot specialise sufficiently based on the function provided, so we help in the common case.
-    public map(fn:(value:T, index:number, vect:Vector<T>) => T, context:any):Vector<T>
-    public map(fn:(value:T, index:number, vect:Vector<T>) => T):Vector<T>
-    public map<T2>(fn:(value:T, index:number, vect:Vector<T>) => T2, context:any):Vector<T2>
-    public map<T2>(fn:(value:T, index:number, vect:Vector<T>) => T2):Vector<T2>
+    public map(fn:(value:T, index:number, vect:Vector<T>) => T, context:any):Vector<T>;
+    public map(fn:(value:T, index:number, vect:Vector<T>) => T):Vector<T>;
+    public map<T2>(fn:(value:T, index:number, vect:Vector<T>) => T2, context:any):Vector<T2>;
+    public map<T2>(fn:(value:T, index:number, vect:Vector<T>) => T2):Vector<T2>;
 
     public map(fn:(value:T, index:number, vect:Vector<T>) => any, context:any = null):Vector<any> {
         var replacement = [];
         for (var i=0; i < this.instance.length; i++) {
             replacement.push(fn.call(context, this.instance[i], i, this));
         }
-        return new Vector<T>(replacement);
+        return new Vector<T>(undefined, freeze(replacement));
     }
 
     public equals(other:any):boolean {
@@ -433,6 +441,7 @@ export class StringMap<T> {
     }
 }
 
+// private utilities for the StringMap implementation.
 module sm {
     export function convertKey(key:string):string { return key + '___'; }
     export function reverseKey(key:string):string { return key.substr(0, key.length - 3); }
@@ -468,7 +477,7 @@ export module q {
             }
         });
 
-        return new SimplePath(new Vector(actual));
+        return new SimplePath(Vector.from<PathSegment>(freeze(actual)));
     }
 
     class SimplePath implements Path {
