@@ -7,7 +7,7 @@ does not change - though it is easy to generate new values from old ones.
 For example:
 
 ```javascript
-var Address = basilisk.makestruct(['name', 'line1''country']),
+var Address = basilisk.makeStruct(['name', 'line1''country']),
     myAddress = new Address({ name: 'Brad Shuttleworth', 'country': 'UK' }),
     changedAddress = myAddress.with_('line1', 'London');
 
@@ -29,6 +29,14 @@ Basilisk structs and datastructures also support a ```.equals()``` method which 
 of each property, which caters for the situation where two equal objects have been created without
 them being created from the same source.
 
+Datastructures
+--------------
+
+Basilisk has decent implementations of Vectors and Maps.  This means that updating or changing 
+large datastructures (+- 10,000 elements) should be reasonably performant - patches to improve 
+performance are welcome.  All these datastructures are persistent, meaning that 'change' methods
+actually return new objects which share as much state with the old versions.
+
 Updates
 -------
 
@@ -37,6 +45,42 @@ update a value deep in a tree of data.  To help with that, Basilisk has an API f
 deep in a tree.
 
 ```javascript
+
+```
+
+Plain-old-javascript
+--------------------
+
+Basilisk is designed to look and work as expected from 'normal' javascript code:  the method
+and property names should be similar to that of the standard library, but with immutable
+(persistent) results.
+
+Using a Vector is a good example.  
+
+```javascript
+
+var vect = basilisk.Vector.from(['a', 'b', 'c', 'd', 'e']),
+    changed = vect.push('f');
+
+console.log(vect.length); // === 5
+console.log(changed.length); // === 6
+
+console.log(vect.get(1)); // returns 'b'
+console.log(vect.get(-1)); // returns 'e'
+```
+
+StringMaps also handle a number of cases that can be annoying in simple javascript:
+
+```javascript
+
+var dict = basilisk.StringMap.from({ 'hello': 'world' });
+
+console.log(dict.get('hello'));  // returns 'world'
+console.log(dict.get('cat', 'on a mat'));  // returns 'on a mat'
+
+dict = dict.set('__proto__', 'this is safe');
+
+console.log(dict.get('__proto__')); // returns 'this is safe'. 
 
 ```
 
