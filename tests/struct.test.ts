@@ -34,9 +34,9 @@ describe("Struct suite", function () {
     })
 });
 
-describe("makestruct suite", function () {
+describe("makeStruct suite", function () {
     describe("Constructor", function () {
-        var Sample = basilisk.makestruct(['a', 'b']);
+        var Sample = basilisk.makeStruct(['a', 'b']);
 
         it("Will create a constructor function from a simple set of properties", function () {
             var eg1 = new Sample({ a: 'check a', b: 'check b'});
@@ -47,32 +47,32 @@ describe("makestruct suite", function () {
 
         it("Will fail if __proto__ is included.", function () {
             expect(function () {
-                var s = basilisk.makestruct(['__proto__']);
+                var s = basilisk.makeStruct(['__proto__']);
             }).toThrow();
         });
 
         it("Will fail if with_ is included.", function () {
             expect(function () {
-                var s = basilisk.makestruct(['with_']);
+                var s = basilisk.makeStruct(['with_']);
             }).toThrow();
         });
 
         it("Will not fail if equals is included, and includeEquals is true", function () {
             expect(function () {
-                var s = basilisk.makestruct(['equals'], true);
+                var s = basilisk.makeStruct(['equals'], true);
             }).toThrow();
         });
 
 
         it("Will not fail if equals is included, and includeEquals is false", function () {
             expect(function () {
-                var s = basilisk.makestruct(['equals'], false);
+                var s = basilisk.makeStruct(['equals'], false);
             }).not.toThrow();
         });
     });
 
     describe("with_ method", function () {
-        var Sample = basilisk.makestruct(['a', 'b']);
+        var Sample = basilisk.makeStruct(['a', 'b']);
 
         it("Should return a version of the object with only the named parameter changed.", function () {
             var eg1 = new Sample({ a: 'check a', b: 'check b'}),

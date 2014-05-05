@@ -1,0 +1,106 @@
+/// <reference path="../d.ts/DefinitelyTyped/jasmine/jasmine.d.ts"/>
+
+import basilisk = require('../src/basilisk');
+
+import Hash = basilisk.hamt.PersistentHashMap;
+
+var freeze = (obj:any):any => { return (Object.freeze) ? Object.freeze(obj) : obj; };
+
+// given a map of strings -> numbers, return a
+function fixedStringHash(values:any):(key:string) => number {
+    var safe = {};
+    for (var key in values) {
+        if (values.hasOwnProperty(key)) {
+            if (typeof values[key] !== 'number') {
+                throw "Must only provide numbers as hashcodes";
+            }
+
+            safe[key] = values[key];
+        }
+    }
+    safe = freeze(safe);
+    return function (key:string):number {
+        if (!safe.hasOwnProperty(key)) {
+            throw "Must only check for keys which are in the provided set.";
+        }
+
+        return safe[key];
+    }
+}
+
+describe('PersistentHashMap', function () {
+    describe('.from', function () {
+        it("Should require a function as first parameter.", function () {
+            var fn = fixedStringHash({ 'a': 0, 'b': 1, 'c': 2 }),
+                map = Hash.from(fn);
+
+            expect(() => { Hash.from(null) }).toThrow();
+        });
+    });
+
+
+    // These tests check that the *internal* behaviour is correct: the external contract is tested above.
+    describe('Internal behaviour', function () {
+        it("Should still be possible to retrieve correct values, even if all keys map to the same value.", function () {
+            var map = Hash.from<string, string>((k:any) => { return 0; }),
+                map = map.set('a', 'a').set('b', 'b').set('c', 'c');
+
+            expect(map.get('a')).toBe('a');
+            expect(map.get('b')).toBe('b');
+            expect(map.get('c')).toBe('c');
+        });
+
+        it("Collisions one deep should function correctly.", function () {
+            // 97 is one deep, and the top bit is 1.  This should thus generate a nested tree, with an interior node
+            // in the middle and a collision node further down.
+            var map = Hash.from<string, string>(fixedStringHash({'a': 1, 'b': 97, 'c': 97 }));
+
+            map = map.set('a', 'a');
+            expect(map['root'] instanceof basilisk.hamt.Leaf).toBe(true);
+            map = map.set('b', 'b');
+            expect(map['root'] instanceof basilisk.hamt.Interior).toBe(true);
+            expect(map['root']['contents'][1] instanceof basilisk.hamt.Interior).toBe(true);
+
+            var nested = map['root']['contents'][1];
+
+            expect(nested['contents'][0] instanceof basilisk.hamt.Leaf).toBe(true);
+            expect(nested['contents'][3] instanceof basilisk.hamt.Leaf).toBe(true);
+
+            map = map.set('c', 'c');
+
+
+            expect(map['root'] instanceof basilisk.hamt.Interior).toBe(true);
+            expect(map['root']['contents'][1] instanceof basilisk.hamt.Interior).toBe(true);
+            nested = map['root']['contents'][1];
+            expect(nested['contents'][0] instanceof basilisk.hamt.Leaf).toBe(true);
+            expect(nested['contents'][3] instanceof basilisk.hamt.Collision).toBe(true);
+
+            expect(map.get('c')).toBe('c');
+            expect(map.get('b')).toBe('b');
+            expect(map.get('a')).toBe('a');
+
+            // now unset the items.
+            map = map.delete('c');
+
+            expect(map['root'] instanceof basilisk.hamt.Interior).toBe(true);
+            expect(map['root']['contents'][1] instanceof basilisk.hamt.Interior).toBe(true);
+            nested = map['root']['contents'][1];
+            expect(nested['contents'][0] instanceof basilisk.hamt.Leaf).toBe(true);
+            expect(nested['contents'][3] instanceof basilisk.hamt.Leaf).toBe(true);
+
+            map = map.delete('b');
+            expect(map['root'] instanceof basilisk.hamt.Leaf).toBe(true);
+        });
+
+        it("Adding 50000 elements should not be prohibitive (+- 0.5s).", function () {
+            var map = Hash.from<number, number>((key:number):number => { return (key >= 0) ?  key : -1 * key; });
+
+            for (var i=0; i < 50000; i++) {
+                map = map.set(i, i);
+            }
+
+            var final = map;
+        });
+
+    });
+});

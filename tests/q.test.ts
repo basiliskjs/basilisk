@@ -13,8 +13,8 @@ import q = basilisk.q;
 //
 // It is modelled on a shopping cart, with items you can buy and a shipping destination.
 
-var Address = basilisk.makestruct(['line1', 'line2', 'line3']);
-var Simple = basilisk.makestruct(['a', 'b']);
+var Address = basilisk.makeStruct(['line1', 'line2', 'line3']);
+var Simple = basilisk.makeStruct(['a', 'b']);
 
 describe("Query module (Q)", function () {
     describe("Simple swap function.", function () {

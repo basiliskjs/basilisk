@@ -1,169 +1,216 @@
-/**
- * Test that the Persistent Vector works correctly.
- */
-
 /// <reference path="../d.ts/DefinitelyTyped/jasmine/jasmine.d.ts"/>
 
 import basilisk = require('../src/basilisk');
 
-// we use this a *lot*, so simplify it here.
 import V = basilisk.Vector;
 
-class Sample extends basilisk.ts.Struct {
-    constructor(opts:{ name:string }) {
-        this.name = opts.name;
-        super();
+var freeze = (obj:any):any => { return (Object.freeze) ? Object.freeze(obj) : obj; };
+
+function charArray(prefix, count):string[] {
+    var r = [];
+    for (var i=0; i<count; i++) {
+        r.push(prefix+i);
     }
-
-    public name:string;
+    return r;
 }
 
-function vectorOfThree():V<Sample> {
-    var a = new Sample({ name: "a" }),
-        b = new Sample({ name: "b" }),
-        c = new Sample({ name: "c" });
+describe("PersistentVector", function () {
+    describe('.from', function () {
+        it("Should return an empty vector when called with an empty array.", function () {
+            var result = V.from([]);
 
-    return V.from<Sample>([a, b, c]);
-}
-
-describe("Vector", function () {
-    describe(".from", function () {
-        it("Can be instantiated with a simple array, and has correct length.", function () {
-            var sample:V<Sample> = vectorOfThree();
-            expect(sample.length).toBe(3);
+            expect(result.length).toBe(0);
         });
 
-        it("Contains all items added to it initially.", function  () {
-            var sample = vectorOfThree();
+        it("Should contain the elements from the initial array when short.", function () {
+            var result = V.from(charArray('a', 3));
 
-            expect(sample.get(0)).toEqual(jasmine.objectContaining({ name: 'a' }));
-            expect(sample.get(1)).toEqual(jasmine.objectContaining({ name: 'b' }));
-            expect(sample.get(2)).toEqual(jasmine.objectContaining({ name: 'c' }));
-        });
-
-        it("Can be extended using append", function () {
-            var sample = vectorOfThree(),
-                extended = sample.append(new Sample({ name: 'd' }));
-
-            expect(sample).not.toBe(extended);
-            expect(sample.length).toBe(3);
-            expect(extended.length).toBe(4);
-            expect(extended.get(3)).toEqual(jasmine.objectContaining({ name: 'd' }));
-        });
-
-        it("Can be created from another vector.", function () {
-            var sample = vectorOfThree(),
-                created = V.from(sample);
-
-            expect(created.get(0)).toEqual(jasmine.objectContaining({ name: 'a' }));
-            expect(created.get(1)).toEqual(jasmine.objectContaining({ name: 'b' }));
-            expect(created.get(2)).toEqual(jasmine.objectContaining({ name: 'c' }));
-            expect(created.get(2).name).toEqual('c');
-        });
-
-        it("Can be created empty.", function () {
-            var sample = V.from([]);
-
-            expect(sample.length).toBe(0);
-        });
-    });
-
-    describe(".forEach", function () {
-        it("Can be iterated with forEach", function () {
-            var sample = vectorOfThree(),
-                count = 0,
-                last = -1,
-                seen = {};
-
-            sample.forEach(function (v:Sample, i:number) {
-                expect(seen[v.name]).toBeUndefined();
-                seen[v.name] = true;
-                count = count + 1;
-                expect(i - last).toBe(1);
-                last = i;
-            });
-
-            expect(count).toBe(sample.length);
-            expect(seen['a']).toBeTruthy();
-            expect(seen['b']).toBeTruthy();
-            expect(seen['c']).toBeTruthy();
-        });
-
-    });
-
-    describe(".set", function () {
-        it("Can have a particular item replaced.", function () {
-            var sample = vectorOfThree(),
-                result = sample.set(1, new Sample({ name: "d" }));
-
-            expect(sample).not.toBe(result);
             expect(result.length).toBe(3);
-            expect(result.get(0)).toEqual(jasmine.objectContaining({ name: 'a' }));
-            expect(result.get(1)).toEqual(jasmine.objectContaining({ name: 'd' }));
-            expect(result.get(2)).toEqual(jasmine.objectContaining({ name: 'c' }));
-
-            expect(sample.get(1)).toEqual(jasmine.objectContaining({ name: 'b' }));
-        });
-
-        it("Strictly identical replace is an identity function.", function () {
-            var sample = vectorOfThree(),
-                result = sample.set(1, sample.get(1));
-
-            expect(sample).toBe(result);
         });
     });
 
-    describe(".filter", function () {
-        it("Only items for which we return true will be included in the filter. ", function () {
-            var sample = vectorOfThree(),
-                callCount = 0;
-            var filterFn = function (value:Sample): boolean {
-                    callCount += 1;
-                    return !(callCount > 1);
-                };
-            var result = sample.filter(filterFn);
+    describe('.get', function () {
+        it("Should retrieve values in the 0th level.", function () {
+            var example = new V(freeze(charArray('a', 3)), 0, 3);
 
-            expect(callCount).toBe(sample.length);
-            expect(result.length).toBe(1);
-            expect(result.get(0)).toBe(sample.get(0));
+            expect(example.get(0)).toBe('a0');
+            expect(example.get(1)).toBe('a1');
+            expect(example.get(2)).toBe('a2');
         });
 
-        // TODO test correct order of calls.
-        // TODO test all items called for
-        // TODO test that later items are correctly removed.
-    });
+        it("Should give an out of bounds error if the index equals or exceeds the length", function () {
+            var example = new V(freeze(charArray('a', 3)), 0, 3);
 
-    describe(".find", function () {
-        it("Should be able to call find with a search function.", function () {
-            var sample = vectorOfThree(),
-                callCount = 0;
-            var searchFn = function (value:Sample, index:number): boolean {
-                return (index === 1);
-            };
-            var result = sample.find(searchFn);
-
-            expect(result).toBe(sample.get(1));
+            expect(() => { example.get(3); }).toThrow("OutOfBounds");
+            expect(() => { example.get(4); }).toThrow("OutOfBounds");
         });
 
-        // TODO test complete coverage
-        // TODO test search
+
+        it("Should give an out of bounds error if the index is too negative", function () {
+            var example = new V(freeze(charArray('a', 3)), 0, 3);
+
+            expect(() => { example.get(-4); }).toThrow("OutOfBounds");
+        });
+
+        it("Should retrieve the correct values for larger vectors.", function () {
+            var example = new V(freeze([
+                freeze(charArray('a', 32)),
+                freeze(charArray('b', 5))
+            ]), 5, 37);
+
+            expect(example.get(32)).toBe('b0');
+            expect(example.get(31)).toBe('a31');
+            expect(example.get(36)).toBe('b4');
+        });
     });
 
-    describe(".map", function () {
-        it("Should be able to call find with a search function.", function () {
-            var sample = vectorOfThree(),
-                callCount = 0;
-            var mapFn = function (value:Sample, index:number): Sample {
-                return <Sample> value.with_('name', value.name + '-');
-            };
-            var result = sample.map(mapFn);
+    describe('.set', function () {
+        it("Should be possible to replace a particular entry in the vector.", function () {
+            var example = new V(freeze([
+                freeze(charArray('a', 32)),
+                freeze(charArray('b', 5))
+            ]), 5, 37),
+                mod1 = example.set(3, 'changed'),
+                mod2 = example.set(33, 'changed');
 
-            expect(result.length).toBe(sample.length);
+            expect(example.get(3)).toBe('a3');
+            expect(example.get(33)).toBe('b1');
 
-            result.forEach(function (val:Sample, index:number) {
-                expect(val.name).toBe(sample.get(index).name + '-');
+            expect(mod1.get(3)).toBe('changed');
+            expect(mod1.get(33)).toBe('b1');
+
+            expect(mod2.get(3)).toBe('a3');
+            expect(mod2.get(33)).toBe('changed');
+        });
+    });
+
+    describe('.push', function () {
+        it("Should be possible to add a number to an empty vector.", function () {
+            var eg = V.from<number>([]),
+                eg1 = eg.push(5);
+
+            expect(eg.length).toBe(0);
+            expect(eg1.length).toBe(1);
+            expect(eg1.get(0)).toBe(5);
+        });
+
+        it("Should be possible to add a number to a vector that is almost full.", function () {
+            var eg = V.from<string>(charArray('a', 32)),
+                eg1 = eg.push('b0');
+
+            expect(eg.length).toBe(32);
+            expect(eg1.length).toBe(33);
+            expect(eg1.get(32)).toBe('b0');
+        });
+    });
+
+    describe('.peek', function () {
+
+    });
+
+    describe('.pop', function () {
+        it("Should throw an error if the vector is empty.", function () {
+            var v = V.from<number>([]);
+
+            expect( () => { v.pop(); }).toThrow("OutOfBounds");
+        });
+
+        it("Should return an empty vector if there is a single element in the vector.", function () {
+            var v = V.from<number>([5]),
+                v1 = v.pop();
+
+            expect(v.length).toBe(1);
+            expect(v.get(0)).toBe(5);
+
+            expect(v1.length).toBe(0);
+        });
+
+        // the first boundary is at 32.
+        it("Should drop from 35 to 30 items cleanly", function () {
+            var v = V.from<string>(charArray('a', 35)),
+                l = v.length,
+                steps = 0;
+
+            expect(v.length).toBe(35);
+            expect(v.get(v.length - 1)).toBe('a' + (v.length - 1));
+
+            while (l > 29) {
+                steps += 1;
+                if (steps > 6) {
+                    throw "Should not have taken more than 6 iterations to drop the count.";
+                }
+                v = v.pop();
+
+                expect(v.length).toBe(l - 1);
+                l = v.length;
+            }
+        });
+
+
+        // the step from depth 2 to depth 3 occurs at 32 * 32
+        it("Should drop from 3 levels to 2 levels cleanly", function () {
+            var v = V.from<string>(charArray('a', 32 * 32 + 10)),
+                l = v.length,
+                steps = 0;
+
+            expect(v.length).toBe(32 * 32 + 10);
+            expect(v.get(v.length - 1)).toBe('a' + (v.length - 1));
+
+            while (l > 32 * 32 - 10) {
+                steps += 1;
+                if (steps > 30) {
+                    throw "Should not have taken more than 20 iterations to drop the count.";
+                }
+                v = v.pop();
+
+                expect(v.length).toBe(l - 1);
+                expect(v.get(v.length - 1)).toBe('a' + (v.length - 1));
+                l = v.length;
+            }
+        });
+    });
+
+    describe('.forEach', function () {
+        it("Should be called for each item in turn.", function () {
+            var seen = {},
+                indexMap = {
+                    'a': 0,
+                    'b': 1,
+                    'c': 2
+                },
+                called = 0,
+
+                example = V.from(['a','b','c']);
+
+            example.forEach( (item:string, index:number) => {
+                called += 1;
+                expect(index).toBe(indexMap[item]);
             });
+
+            expect(called).toBe(3);
+        });
+    });
+
+    describe('.equals', function () {
+        it("Should compare simple vectors equally.", function () {
+            var empty1 = V.from([]), empty2 = V.from([]),
+                small1 = V.from(charArray('a', 33)), small2 = V.from(charArray('a', 33));
+
+            expect(empty1.equals(empty2)).toBe(true);
+            expect(small1.equals(small2)).toBe(true);
+            expect(empty1.equals(small1)).not.toBe(true);
+        });
+
+        it("Should compare long vectors correctly.", function () {
+            var big1 = V.from(charArray('a', 32 * 32 + 10)),
+                big2 = V.from(charArray('a', 32 * 32 + 10));
+
+            expect(big1.equals(big2)).toBe(true);
+
+            // change an element.
+
+            big2 = big2.set(335, 'changed');
+            expect(big2.equals(big1)).toBe(false);
         });
     });
 });
-
