@@ -1,6 +1,6 @@
-/// <reference path="../d.ts/DefinitelyTyped/jasmine/jasmine.d.ts"/>
+/// <reference path="../../d.ts/DefinitelyTyped/jasmine/jasmine.d.ts"/>
 
-import basilisk = require('../src/basilisk');
+import basilisk = require('../basilisk');
 
 import V = basilisk.Vector;
 

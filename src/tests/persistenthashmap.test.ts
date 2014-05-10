@@ -1,6 +1,6 @@
-/// <reference path="../d.ts/DefinitelyTyped/jasmine/jasmine.d.ts"/>
+/// <reference path="../../d.ts/DefinitelyTyped/jasmine/jasmine.d.ts"/>
 
-import basilisk = require('../src/basilisk');
+import basilisk = require('../basilisk');
 
 import Hash = basilisk.hamt.PersistentHashMap;
 
@@ -92,10 +92,11 @@ describe('PersistentHashMap', function () {
             expect(map['root'] instanceof basilisk.hamt.Leaf).toBe(true);
         });
 
-        it("Adding 50000 elements should not be prohibitive (+- 0.5s).", function () {
+        var count:number = 5000;
+        it("Adding " + count + " elements should not be prohibitive (+- 0.5s).", function () {
             var map = Hash.from<number, number>((key:number):number => { return (key >= 0) ?  key : -1 * key; });
 
-            for (var i=0; i < 50000; i++) {
+            for (var i=0; i < count; i++) {
                 map = map.set(i, i);
             }
 

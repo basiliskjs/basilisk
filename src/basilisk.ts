@@ -1182,7 +1182,7 @@ export var hashCode = hamt.hashCode;
  * way.  Key to this is (a) the ability to descend the object tree, and (b) to know how to effect
  * a change.
  */
-export module q {
+export module query {
     export interface Path {
         swap<T>(root:T, change:(obj:any) => any):T;
         value(root:any):any;

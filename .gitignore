@@ -1,5 +1,6 @@
 .idea/
 .grunt/
+.tscache
 **/.baseDir.ts 
 tests/.baseDir.ts 
 **/.baseDir.js
@@ -7,7 +8,7 @@ tests/.baseDir.ts
 basilisk.iml
 node_modules/
 build/
-testbuild/
+build-amd/
 src/**/*.map
 src/**/.baseDir.*
 tests/**/*.js

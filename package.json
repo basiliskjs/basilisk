@@ -11,6 +11,8 @@
     "typescript": "1.0.0",
     "tslint": "~0.4.7",
     "grunt-contrib-jasmine": "~0.5.3",
-    "grunt-template-jasmine-requirejs": "~0.1.10"
+    "grunt-template-jasmine-requirejs": "~0.1.10",
+    "grunt-jasmine-node": "~0.2.1",
+    "grunt-umd": "~1.7.4"
   }
 }

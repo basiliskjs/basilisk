@@ -1,12 +1,8 @@
-/**
- * The Q module handles 'update' queries on basilisk datasets.
- */
+/// <reference path="../../d.ts/DefinitelyTyped/jasmine/jasmine.d.ts"/>
 
-/// <reference path="../d.ts/DefinitelyTyped/jasmine/jasmine.d.ts"/>
+import basilisk = require('../basilisk');
 
-import basilisk = require('../src/basilisk');
-
-import q = basilisk.q;
+import q = basilisk.query;
 
 // We have a 'simple' set of objects here, to show how you can descend deeply into an object
 // tree and update it, using the Struct module.
@@ -22,7 +18,7 @@ describe("Query module (Q)", function () {
             var eg1 = new Address({ line1: 'l 1', line2: 'l 2', line3: 'l 3' }),
                 calls = 0;
 
-            basilisk.q.swap(eg1, [], function (obj:any) {
+            q.swap(eg1, [], function (obj:any) {
                 expect(obj).toBe(eg1);
                 calls += 1;
             });
@@ -34,7 +30,7 @@ describe("Query module (Q)", function () {
                 calls = 0,
                 result;
 
-            result = basilisk.q.swap(eg1, ['line1'], function (obj:any) {
+            result = q.swap(eg1, ['line1'], function (obj:any) {
                 expect(obj).toBe(eg1.line1);
                 calls += 1;
                 return 'changed';
@@ -54,7 +50,7 @@ describe("Query module (Q)", function () {
                 calls = 0,
                 result;
 
-            result = basilisk.q.swap(eg1, ['line3', 'line2'], function (obj:any) {
+            result = q.swap(eg1, ['line3', 'line2'], function (obj:any) {
                 expect(obj).toBe(eg1.line3.line2);
                 calls += 1;
                 return 'changed';
