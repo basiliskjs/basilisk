@@ -106,16 +106,12 @@ export function equals(a:any, b:any):boolean {
 
 /**
  * Given a list of strings, create constructor function which will create instances of the
- * named 'class'.  By default, an 'equals' method is created which checks each property using
- * the basilisk.equals method, so that nested structs can easily be checked for logical equality.
+ * named 'class'.
  *
- * No property name can start with '__' or be 'with_', to avoid clashes with the basic functionality.
- *
- * @param baseProps a list of
- * @param includeEquals
- * @returns { new(opts:any); with_(propName:string, propVal:any):Struct; }
+ * An 'equals' method is added to every struct, which will apply a basilisk-equality check to each
+ * property in turn to determine equality.
  */
-export function makeStruct(baseProps:Array<string>, includeEquals:boolean = true) {
+export function makeStruct(baseProps:Array<string>) {
     var props = baseProps.slice();
 
     for (var i =0; i<props.length; i++) {
@@ -123,8 +119,8 @@ export function makeStruct(baseProps:Array<string>, includeEquals:boolean = true
             throw "Properties of structs cannot start with __, to prevent collision with __proto__ and other core object behaviours.";
         } else if (props[i] === 'with_') {
             throw "Structs cannot have a 'with_' property, since that collides with the change protocol.";
-        } else if (includeEquals && props[i] == 'equals') {
-            throw "Structs with an equality property cannot have "
+        } else if (props[i] == 'equals') {
+            throw "Structs cannot have an 'equals' method."
         }
     }
 
@@ -162,30 +158,27 @@ export function makeStruct(baseProps:Array<string>, includeEquals:boolean = true
         }
     };
 
-    if (includeEquals) {
-        Constructor.prototype.equals = function (other) {
-            if (this === other) {
-                return true;
-            }
+    Constructor.prototype.equals = function (other) {
+        if (this === other) {
+            return true;
+        }
 
-            if (other === undefined || other === null) {
-                return false;
-            }
+        if (other === undefined || other === null) {
+            return false;
+        }
 
-            // we we
-            if (sameType(this, other)) {
-                for (var i=0; i<baseProps.length; i++) {
-                    if (!equals(this[baseProps[i]], other[baseProps[i]])) {
-                        return false;
-                    }
+        // we we
+        if (sameType(this, other)) {
+            for (var i=0; i<baseProps.length; i++) {
+                if (!equals(this[baseProps[i]], other[baseProps[i]])) {
+                    return false;
                 }
-                // no properties were not equal, thus we must be true.
-                return true;
-            } else {
-                // since we have different prototypes, we must be different objects.
-                return false;
             }
-
+            // no properties were not equal, thus we must be true.
+            return true;
+        } else {
+            // since we have different prototypes, we must be different objects.
+            return false;
         }
     }
 

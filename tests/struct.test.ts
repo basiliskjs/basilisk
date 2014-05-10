@@ -57,18 +57,12 @@ describe("makeStruct suite", function () {
             }).toThrow();
         });
 
-        it("Will not fail if equals is included, and includeEquals is true", function () {
+        it("Will fail if equals is included", function () {
             expect(function () {
-                var s = basilisk.makeStruct(['equals'], true);
+                var s = basilisk.makeStruct(['equals']);
             }).toThrow();
         });
 
-
-        it("Will not fail if equals is included, and includeEquals is false", function () {
-            expect(function () {
-                var s = basilisk.makeStruct(['equals'], false);
-            }).not.toThrow();
-        });
     });
 
     describe("with_ method", function () {
