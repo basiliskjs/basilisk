@@ -4,7 +4,7 @@
  */
 
 // internal shims for a few es5 functions which we cannot reasonably expect people to shim.
-var freeze = (obj:any):any => { return (Object.freeze) ? Object.freeze(obj) : obj; },
+var freeze = (Object.freeze) ? (obj:any):any => { return Object.freeze(obj) } : (obj:any):any => { return obj; },
     hasProp = function (obj, prop):boolean { return Object.hasOwnProperty.call(obj, prop); },
 // loosely identify if objects have the same type, mainly used for basilisk-originated objects.
 // returns false if both are null or undefined
@@ -199,7 +199,6 @@ export class ArrayVector<T> implements Sequence<T> {
         this.instance = ref;
         this.length = this.instance.length;
 
-        freeze(this.instance);
         freeze(this);
     }
 
@@ -211,7 +210,7 @@ export class ArrayVector<T> implements Sequence<T> {
         var ref:Array<T>;
 
         if (sample == null) {
-            ref = freeze([]);
+            ref = [];
         } else if (sample instanceof ArrayVector) {
             return sample;
         } else if (typeof sample.forEach == 'function') {
@@ -219,7 +218,6 @@ export class ArrayVector<T> implements Sequence<T> {
             sample.forEach(function (val:T) {
                 ref.push(val);
             });
-            freeze(ref);
         }
         return new ArrayVector(undefined, ref);
     }
@@ -228,9 +226,9 @@ export class ArrayVector<T> implements Sequence<T> {
     public length:number;
 
     public append(value:T):ArrayVector<T> {
-        var copy = this.instance.slice();
+        var copy = this.instance.slice(0);
         copy.push(value);
-        return new ArrayVector<T>(undefined, freeze(copy));
+        return new ArrayVector<T>(undefined, copy);
     }
 
     /**
@@ -271,7 +269,7 @@ export class ArrayVector<T> implements Sequence<T> {
 
         var adjusted = this.instance.slice();
         adjusted[index] = value;
-        return new ArrayVector<T>(undefined, freeze(adjusted));
+        return new ArrayVector<T>(undefined, adjusted);
     }
 
     public forEach(fn:(value:T, index:number, vect:any) => any, context:any = null):void {
@@ -287,7 +285,7 @@ export class ArrayVector<T> implements Sequence<T> {
                 replacement.push(this.instance[i]);
             }
         }
-        return new ArrayVector<T>(undefined, freeze(replacement));
+        return new ArrayVector<T>(undefined, replacement);
     }
 
     public find(fn:(value:T, index:number, vect:any) => boolean, context:any = null):T {
@@ -501,7 +499,7 @@ export class Vector<T> implements Sequence<T> {
         if (this.root.length === v.WIDTH) {
             shift = this.shift + v.BITS;
             root = v.setIndex([this.root], shift, index, value);
-            root = freeze(root);
+            root = root;
         } else {
             root = v.setIndex(this.root, shift, index, value);
         }
@@ -662,7 +660,7 @@ export class Vector<T> implements Sequence<T> {
     }
 }
 
-var EMPTY_VECTOR = new Vector(freeze([]), 0, 0);
+var EMPTY_VECTOR = new Vector([], 0, 0);
 
 // Classes required to implement vectors.
 module v {
@@ -687,11 +685,11 @@ module v {
         if (level === 0) {
             var changed = node.slice(0);
             changed[offset] = value;
-            return freeze(changed);
+            return changed;
         } else {
             var changed = node.slice(0);
             changed[offset] = setIndex((changed.length == offset) ? [] : changed[offset], level - BITS, index, value);
-            return freeze(changed);
+            return changed;
         }
     }
 
@@ -702,7 +700,7 @@ module v {
             if (node.length === 1) {
                 return null;
             } else {
-                return freeze(node.slice(0, node.length - 1));
+                return node.slice(0, node.length - 1);
             }
         } else {
             // we are always removing the *last* node in the vector, and by extension the last element
@@ -721,7 +719,7 @@ module v {
             } else {
                 changed = node.slice(0);
                 changed[offset] = popped;
-                return freeze(changed);
+                return changed;
             }
         }
     }
@@ -975,7 +973,7 @@ export module hamt {
             }
 
             this.contents = contents;
-            freeze(this);
+//            freeze(this);
         }
 
         private contents:Array<Node<K, T>>;
@@ -996,7 +994,7 @@ export module hamt {
             if (this.contents[index] === undefined) {
                 var changed:Array<Node<K, T>> = this.contents.slice(0);
                 changed[index] = new Leaf(undefined, hashCode, key, value);
-                return new Interior<K, T>(undefined, freeze(changed));
+                return new Interior<K, T>(undefined, changed);
             } else {
                 var newchild = this.contents[index].set(shift + BITS, hashCode, key, value);
                 if (newchild === this.contents[index]) {
@@ -1004,7 +1002,7 @@ export module hamt {
                 }
                 var changed = this.contents.slice(0);
                 changed[index] = newchild;
-                return new Interior<K, T>(undefined, freeze(changed));
+                return new Interior<K, T>(undefined, changed);
             }
         }
 
@@ -1038,7 +1036,7 @@ export module hamt {
                 } else if (population === 1 && (instance instanceof Leaf || instance instanceof Collision)) {
                     return instance;
                 } else {
-                    return new Interior<K, T>(undefined, freeze(changed));
+                    return new Interior<K, T>(undefined, changed);
                 }
             }
         }
@@ -1061,7 +1059,7 @@ export module hamt {
             this.hashCode = hashCode;
             this.key = key;
             this.value = value;
-            freeze(this);
+//            freeze(this);
         }
 
         private hashCode:number;
@@ -1086,12 +1084,12 @@ export module hamt {
                 }
             } else if (hashCode === this.hashCode) {
                 // collision
-                return new Collision<K, T>(undefined, this.hashCode, freeze([]))
+                return new Collision<K, T>(undefined, this.hashCode, [])
                     .set(shift, this.hashCode, this.key, this.value)
                     .set(shift, hashCode, key, value);
             } else {
                 // create a new try, and place our
-                var newroot = new Interior<K, T>(undefined, freeze([]));
+                var newroot = new Interior<K, T>(undefined, []);
                 return newroot
                     .set(shift, this.hashCode, this.key, this.value)
                     .set(shift, hashCode, key, value);
@@ -1112,7 +1110,7 @@ export module hamt {
         constructor(ignore:any, hashCode:number, values:Array<any>) {
             this.hashCode = hashCode;
             this.values = values;
-            freeze(this);
+//            freeze(this);
         }
         private hashCode:number;
         private values:Array<any>;
@@ -1135,13 +1133,13 @@ export module hamt {
                     }
                     var newvalues = this.values.slice(0);
                     newvalues[i+1] = value;
-                    return new Collision<K, T>(undefined, hashCode, freeze(newvalues));
+                    return new Collision<K, T>(undefined, hashCode, newvalues);
                 }
             }
             newvalues = this.values.slice(0);
             newvalues.push(key);
             newvalues.push(value);
-            return new Collision<K, T>(undefined, hashCode, freeze(newvalues));
+            return new Collision<K, T>(undefined, hashCode, newvalues);
         }
 
         public delete(shift:number, hashCode:number, key:K):hamt.Node<K, T> {
@@ -1159,7 +1157,7 @@ export module hamt {
             } else if (newvalues.length == 2) {
                 return new Leaf<K, T>(undefined, hashCode, newvalues[0], newvalues[1]);
             } else {
-                return new Collision<K, T>(undefined, hashCode, freeze(newvalues));
+                return new Collision<K, T>(undefined, hashCode, newvalues);
             }
         }
 
@@ -1207,13 +1205,13 @@ export module query {
             }
         });
 
-        return new SimplePath(ArrayVector.from<PathSegment>(freeze(actual)));
+        return new SimplePath(ArrayVector.from<PathSegment>(actual));
     }
 
     class SimplePath implements Path {
         constructor(inner:ArrayVector<PathSegment>) {
             this.inner = inner;
-            freeze(this);
+//            freeze(this);
         }
 
         public inner:ArrayVector<PathSegment>;

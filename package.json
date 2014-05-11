@@ -13,6 +13,8 @@
     "grunt-contrib-jasmine": "~0.5.3",
     "grunt-template-jasmine-requirejs": "~0.1.10",
     "grunt-jasmine-node": "~0.2.1",
-    "grunt-umd": "~1.7.4"
+    "grunt-umd": "~1.7.4",
+    "grunt-benchmark": "~0.2.0",
+    "benchmark": "~1.0.0"
   }
 }
