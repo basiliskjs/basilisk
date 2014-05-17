@@ -46,6 +46,32 @@ deep in a tree.
 
 ```javascript
 
+
+var b$ = basilisk.query;
+
+// Given some deeply nested structure called 'store'
+// where store.a.path.to.a.property is a property deep in the structure
+// this will create a new value from that structure with a value replaced.
+
+// Prints the initial value, followed by 10.
+console.log('Given an initial value of', store.a.path.deep.inside);
+store = b$.replace(store, ['a', 'path', 'deep', 'inside'], 10);
+console.log('We end up with', store.a.path.deep.inside);
+
+// There is a more general method, 'swap', which applies a function to the value
+// and uses the return value as the new version.
+
+// Will print 17
+store = b$.swap(store, ['a', 'path', 'deep', 'inside'],
+   function (initial) { return initial + 7; });
+console.log('Swap gives us', store.a.path.deep.inside);
+
+// These methods can also be used with datastructures, using the 'at'
+// helper.
+
+store = b$.replace(store, ['a', 'keyed', b$.at('chain'), 'works', 'too'], 12);
+
+// b$ works with any value datastructure which supports a .get and .set method.
 ```
 
 Plain-old-javascript
