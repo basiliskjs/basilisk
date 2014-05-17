@@ -50,11 +50,11 @@ Examples
 ========
 
 There is a simple example application called [Listicle](https://github.com/basiliskjs/listicle).
+ 
+Documentation
+=============
 
-Full Documentation
-==================
-
-Coming shortly.
+Read all about it on [readthedocs](http://basilisk.readthedocs.org/en/latest/).
 
 Installing Basilisk
 ===================
