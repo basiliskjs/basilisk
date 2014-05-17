@@ -14,3 +14,4 @@ src/**/.baseDir.*
 tests/**/*.js
 tests/**/*.map
 tests/.baseDir.ts
+dist/
