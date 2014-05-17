@@ -1,0 +1,28 @@
+{
+  "name": "basilisk",
+  "version": "0.3-pre",
+  "authors": [
+    "Brad Shuttleworth <brad.shuttleworth@gmail.com> <brad.shuttleworth@moo.com>"
+  ],
+  "description": "A value library for Javascript",
+  "main": "dist/basilisk.amd.js",
+  "moduleType": [
+    "amd",
+    "globals"
+  ],
+  "keywords": [
+    "basilisk",
+    "immutability",
+    "values"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "build",
+    "build-amd",
+    "benchmarks",
+    "d.ts"
+  ]
+}
