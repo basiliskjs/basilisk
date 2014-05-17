@@ -70,7 +70,7 @@ module.exports = function(grunt) {
                 dest: 'build-amd/basilisk.js',
 
                 // if missing the templates/umd.hbs file will be used
-                template: 'unit',
+                template: 'src/build/umd.hbs',
                 globalAlias: 'basilisk',
                 objectToExport: 'exports',
                 indent: '  '
