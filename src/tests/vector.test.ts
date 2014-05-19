@@ -199,6 +199,8 @@ describe("PersistentVector", function () {
             expect(empty1.equals(empty2)).toBe(true);
             expect(small1.equals(small2)).toBe(true);
             expect(empty1.equals(small1)).not.toBe(true);
+            expect(small1.equals(empty1)).not.toBe(true);
+
         });
 
         it("Should compare long vectors correctly.", function () {
