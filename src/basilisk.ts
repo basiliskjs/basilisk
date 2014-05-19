@@ -869,8 +869,13 @@ export module hamt {
                     diff = true;
                 }
             });
+            other.forEach((item:T, key:K) => {
+                if (!equals(item, this.get(key))) {
+                    diff = true;
+                }
+            });
 
-            return diff;
+            return !diff;
         }
     }
 
@@ -935,7 +940,10 @@ export module hamt {
             }
         }
 
-        public forEach(fn:(value:T) => any, context:any = undefined):void {
+        public forEach(fn:(value:T, key:string) => any, context:any):void;
+        public forEach(fn:(value:T, key:string) => any):void;
+
+        public forEach(fn:(value:T, key:string) => any, context:any = undefined):void {
             if (this.actual === null) {
                 return;
             }

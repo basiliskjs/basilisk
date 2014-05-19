@@ -34,5 +34,27 @@ describe('PersistentStringMap', function () {
             expect(example.get('a')).toBe('hello');
             expect(example.get('__proto__')).toBe('check');
         });
+
+        it("Must be possible to check equality.", function () {
+            var eg1 = SM.from({'a': 'b'}),
+                eg2 = SM.from({'a': 'b'});
+
+            expect(basilisk.equals(eg1, eg2)).toBe(true);
+        });
+
+        it("Must be possible for equality to fail.", function () {
+            var eg1 = SM.from({'a': 'b'}),
+                eg2 = SM.from({'a': 'c'});
+
+            expect(basilisk.equals(eg1, eg2)).toBe(false);
+        });
+
+        it("Subset order should not matter..", function () {
+            var eg1 = SM.from({'a': 'b'}),
+                eg2 = SM.from({'a': 'b', 'c': 'd'});
+
+            expect(basilisk.equals(eg1, eg2)).toBe(basilisk.equals(eg2, eg1));
+            expect(basilisk.equals(eg1, eg2)).toBe(false);
+        });
     });
 });
