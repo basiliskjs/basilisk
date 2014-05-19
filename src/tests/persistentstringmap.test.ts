@@ -2,7 +2,7 @@
 
 import basilisk = require('../basilisk');
 
-import SM = basilisk.hamt.PersistentStringMap;
+import SM = basilisk.StringMap;
 
 var freeze = (obj:any):any => { return (Object.freeze) ? Object.freeze(obj) : obj; };
 

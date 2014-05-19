@@ -738,231 +738,12 @@ export module hamt {
         (key:K):number;
     }
 
-    export function hashCode(key:any):number {
-        var t = typeof key;
 
-        if (t === 'string') {
-            return _stringHash(key);
-        } else if (t === 'number') {
-            return (key >= 0) ? key : -1 * key;
-        } else if (t === 'boolean') {
-            return key + 0;
-        } else if (key === undefined || key === null) {
-            return 0;
-        }
 
-        if (typeof key['hashCode'] !== 'function') {
-            throw "TypeError: object must support .hashCode to be a member of a hash function."
-        }
 
-        var res = key['hashCode']();
-        if (typeof res !== 'number') {
-            throw "TypeError: hashCode must return a number."
-        }
-        return res;
-    }
 
-    // TODO pick a decent hash function.
-    // Taken from http://www.cse.yorku.ca/~oz/hash.html
-    function _stringHash(source:string):number {
-        if (source === null || source === undefined) {
-            return 0;
-        } else if (typeof source !== 'string') {
-            throw "TypeError: only strings are supported for hashing.";
-        }
 
-        var hash = 0,
-            current;
 
-        for (var i = 0; i < source.length; i++) {
-            current = source.charCodeAt(i);
-            hash = current + (hash << 6) + (hash << 16) - hash;
-        }
-
-        return hash;
-    }
-
-    export class PersistentHashMap<K, T> implements Sequence<T>  {
-        constructor(ignored:any, hashFn:HashFn<K>, root:Node<K, T>) {
-            if (ignored !== undefined) {
-                throw "TypeError: constructor is private: please use .from to create a new HashMap";
-            }
-            this.hashFn = hashFn;
-            this.root = root;
-            freeze(this);
-        }
-
-        private hashFn:HashFn<K>;
-        private root:Node<K, T>;
-
-        public get(key:K, default_?:T):T {
-            if (this.root === null) { return default_; }
-            return this.root.get(0, this.hashFn(key), key, default_);
-        }
-
-        public has(key:K):boolean {
-            if (this.root === null) { return false; }
-            var NOTFOUND = <T> {}; // cannot be contained by strict equality.
-            return (this.root.get(0, this.hashFn(key), key, NOTFOUND) !== NOTFOUND);
-        }
-
-        public set(key:K, value:T):PersistentHashMap<K, T> {
-            var newroot:Node<K, T>;
-            if (this.root === null) {
-                newroot = new Leaf<K, T>(undefined, this.hashFn(key), key, value);
-            } else {
-                newroot = this.root.set(0, this.hashFn(key), key, value);
-            }
-
-            if (newroot === this.root) {
-                return this;
-            }
-
-            return new hamt.PersistentHashMap<K, T>(undefined, this.hashFn, newroot);
-        }
-
-        public delete(key:K):PersistentHashMap<K, T> {
-            if (this.root === null) {
-                return this;
-            }
-
-            var newroot = this.root.delete(0, this.hashFn(key), key);
-            if (newroot === this.root) {
-                return this;
-            }
-
-            return new PersistentHashMap<K, T>(undefined, this.hashFn, newroot);
-        }
-
-        public forEach(fn:(value:T, key:K, source:PersistentHashMap<K, T>) => any, context:any = undefined):void {
-            if (this.root === null) {
-                return;
-            }
-
-            this.root.forEach(fn, context, this);
-        }
-
-        public static from<K, T>(hashFn: HashFn<K>) {
-            if (typeof hashFn !== 'function') {
-                throw "TypeError: Must provide a hash function to .from";
-            }
-            return new PersistentHashMap(undefined, hashFn, null);
-        }
-
-        public equals(other:any):boolean {
-            if (this === other) {
-                return true;
-            }
-
-            if (!(other instanceof PersistentHashMap)) {
-                return false;
-            }
-
-            if (this.hashFn !== other.hashFn) {
-                return false;
-            }
-
-            // TODO we can go faster than this.
-            var diff:boolean = false;
-            this.forEach((item:T, key:K) => {
-                if (!equals(item, other.get(key))) {
-                    diff = true;
-                }
-            });
-            other.forEach((item:T, key:K) => {
-                if (!equals(item, this.get(key))) {
-                    diff = true;
-                }
-            });
-
-            return !diff;
-        }
-    }
-
-    export class PersistentStringMap<T> implements Sequence<T>  {
-        constructor(ignored:any, actual:PersistentHashMap<string, T>) {
-            if (ignored !== undefined) {
-                throw "TypeError: constructor is private - use the .from methods to create new StringMaps";
-            }
-            this.actual = actual;
-            freeze(this);
-        }
-
-        private actual:PersistentHashMap<string, T>;
-
-        public get(key:string, default_?:T):T {
-
-            return this.actual.get(key, default_);
-        }
-
-        public has(key:string):boolean {
-            if (this.actual === null) { return false; }
-            var NOTFOUND = <T> {}; // cannot be contained by strict equality.
-            return (this.actual.get(key, NOTFOUND) !== NOTFOUND);
-        }
-
-        public set(key:string, value:T):PersistentStringMap<T> {
-            var newactual = this.actual.set(key, value);
-            if (newactual === this.actual) {
-                return this;
-            }
-
-            return new hamt.PersistentStringMap<T>(undefined, newactual);
-        }
-
-        public delete(key:string):PersistentStringMap<T> {
-            var newactual = this.actual.delete(key);
-            if (newactual === this.actual) {
-                return this;
-            }
-
-            return new hamt.PersistentStringMap<T>(undefined, newactual);
-        }
-
-        public static from<T>(sample:PersistentStringMap<T>):PersistentStringMap<T>;
-        public static from<T>(sample:any):PersistentStringMap<T>;
-        public static from<T>():PersistentStringMap<T>; // same as empty.
-
-        public static from<T>(sample?:any):PersistentStringMap<T> {
-            if (sample === null || sample === undefined) {
-                return new PersistentStringMap<T>(undefined, new PersistentHashMap<string, T>(undefined, _stringHash, null));
-            } else if (sample instanceof PersistentStringMap) {
-                return sample;
-            } else {
-                // make a new item, and apply all children.
-                var hamt = new PersistentHashMap<string, T>(undefined, _stringHash, null);
-                for (var key in sample) {
-                    if (Object.hasOwnProperty.call(sample, key)) {
-                        hamt = hamt.set(key, sample[key]);
-                    }
-                }
-                return new PersistentStringMap<T>(undefined, hamt);
-            }
-        }
-
-        public forEach(fn:(value:T, key:string) => any, context:any):void;
-        public forEach(fn:(value:T, key:string) => any):void;
-
-        public forEach(fn:(value:T, key:string) => any, context:any = undefined):void {
-            if (this.actual === null) {
-                return;
-            }
-
-            this.actual.forEach(fn, context);
-        }
-
-        public equals(other:any):boolean {
-            if (this === other) {
-                return true;
-            }
-
-            if (!(other instanceof PersistentStringMap)) {
-                return false;
-            }
-
-            return equals(this.actual, other.actual);
-        }
-    }
 
     export interface Node<K, T> {
         get(shift:number, hashCode:number, key:K, default_:T):T;
@@ -1178,10 +959,230 @@ export module hamt {
     }
 }
 
-export var StringMap = hamt.PersistentStringMap;
-export var HashMap = hamt.PersistentHashMap;
+// Taken from http://www.cse.yorku.ca/~oz/hash.html
+function _stringHash(source:string):number {
+    if (source === null || source === undefined) {
+        return 0;
+    } else if (typeof source !== 'string') {
+        throw "TypeError: only strings are supported for hashing.";
+    }
 
-export var hashCode = hamt.hashCode;
+    var hash = 0,
+        current;
+
+    for (var i = 0; i < source.length; i++) {
+        current = source.charCodeAt(i);
+        hash = current + (hash << 6) + (hash << 16) - hash;
+    }
+
+    return hash;
+}
+
+export function hashCode(key:any):number {
+    var t = typeof key;
+
+    if (t === 'string') {
+        return _stringHash(key);
+    } else if (t === 'number') {
+        return (key >= 0) ? key : -1 * key;
+    } else if (t === 'boolean') {
+        return key + 0;
+    } else if (key === undefined || key === null) {
+        return 0;
+    }
+
+    if (typeof key['hashCode'] !== 'function') {
+        throw "TypeError: object must support .hashCode to be a member of a hash function."
+    }
+
+    var res = key['hashCode']();
+    if (typeof res !== 'number') {
+        throw "TypeError: hashCode must return a number."
+    }
+    return res;
+}
+
+export class HashMap<K, T> implements Sequence<T>  {
+    constructor(ignored:any, hashFn:hamt.HashFn<K>, root:hamt.Node<K, T>) {
+        if (ignored !== undefined) {
+            throw "TypeError: constructor is private: please use .from to create a new HashMap";
+        }
+        this.hashFn = hashFn;
+        this.root = root;
+        freeze(this);
+    }
+
+    private hashFn:hamt.HashFn<K>;
+    private root:hamt.Node<K, T>;
+
+    public get(key:K, default_?:T):T {
+        if (this.root === null) { return default_; }
+        return this.root.get(0, this.hashFn(key), key, default_);
+    }
+
+    public has(key:K):boolean {
+        if (this.root === null) { return false; }
+        var NOTFOUND = <T> {}; // cannot be contained by strict equality.
+        return (this.root.get(0, this.hashFn(key), key, NOTFOUND) !== NOTFOUND);
+    }
+
+    public set(key:K, value:T):HashMap<K, T> {
+        var newroot:hamt.Node<K, T>;
+        if (this.root === null) {
+            newroot = new hamt.Leaf<K, T>(undefined, this.hashFn(key), key, value);
+        } else {
+            newroot = this.root.set(0, this.hashFn(key), key, value);
+        }
+
+        if (newroot === this.root) {
+            return this;
+        }
+
+        return new HashMap<K, T>(undefined, this.hashFn, newroot);
+    }
+
+    public delete(key:K):HashMap<K, T> {
+        if (this.root === null) {
+            return this;
+        }
+
+        var newroot = this.root.delete(0, this.hashFn(key), key);
+        if (newroot === this.root) {
+            return this;
+        }
+
+        return new HashMap<K, T>(undefined, this.hashFn, newroot);
+    }
+
+    public forEach(fn:(value:T, key:K, source:HashMap<K, T>) => any, context:any = undefined):void {
+        if (this.root === null) {
+            return;
+        }
+
+        this.root.forEach(fn, context, this);
+    }
+
+    public static from<K, T>(hashFn: hamt.HashFn<K>) {
+        if (typeof hashFn !== 'function') {
+            throw "TypeError: Must provide a hash function to .from";
+        }
+        return new HashMap(undefined, hashFn, null);
+    }
+
+    public equals(other:any):boolean {
+        if (this === other) {
+            return true;
+        }
+
+        if (!(other instanceof HashMap)) {
+            return false;
+        }
+
+        if (this.hashFn !== other.hashFn) {
+            return false;
+        }
+
+        // TODO we can go faster than this.
+        var diff:boolean = false;
+        this.forEach((item:T, key:K) => {
+            if (!equals(item, other.get(key))) {
+                diff = true;
+            }
+        });
+        other.forEach((item:T, key:K) => {
+            if (!equals(item, this.get(key))) {
+                diff = true;
+            }
+        });
+
+        return !diff;
+    }
+}
+
+export class StringMap<T> implements Sequence<T>  {
+    constructor(ignored:any, actual:HashMap<string, T>) {
+        if (ignored !== undefined) {
+            throw "TypeError: constructor is private - use the .from methods to create new StringMaps";
+        }
+        this.actual = actual;
+        freeze(this);
+    }
+
+    private actual:HashMap<string, T>;
+
+    public get(key:string, default_?:T):T {
+
+        return this.actual.get(key, default_);
+    }
+
+    public has(key:string):boolean {
+        if (this.actual === null) { return false; }
+        var NOTFOUND = <T> {}; // cannot be contained by strict equality.
+        return (this.actual.get(key, NOTFOUND) !== NOTFOUND);
+    }
+
+    public set(key:string, value:T):StringMap<T> {
+        var newactual = this.actual.set(key, value);
+        if (newactual === this.actual) {
+            return this;
+        }
+
+        return new StringMap<T>(undefined, newactual);
+    }
+
+    public delete(key:string):StringMap<T> {
+        var newactual = this.actual.delete(key);
+        if (newactual === this.actual) {
+            return this;
+        }
+
+        return new StringMap<T>(undefined, newactual);
+    }
+
+    public static from<T>(sample:StringMap<T>):StringMap<T>;
+    public static from<T>(sample:any):StringMap<T>;
+    public static from<T>():StringMap<T>; // same as empty.
+
+    public static from<T>(sample?:any):StringMap<T> {
+        if (sample === null || sample === undefined) {
+            return new StringMap<T>(undefined, new HashMap<string, T>(undefined, _stringHash, null));
+        } else if (sample instanceof StringMap) {
+            return sample;
+        } else {
+            // make a new item, and apply all children.
+            var hamt = new HashMap<string, T>(undefined, _stringHash, null);
+            for (var key in sample) {
+                if (Object.hasOwnProperty.call(sample, key)) {
+                    hamt = hamt.set(key, sample[key]);
+                }
+            }
+            return new StringMap<T>(undefined, hamt);
+        }
+    }
+
+    public forEach(fn:(value:T, key:string) => any, context:any):void;
+    public forEach(fn:(value:T, key:string) => any):void;
+
+    public forEach(fn:(value:T, key:string) => any, context:any = undefined):void {
+        if (this.actual === null) {
+            return;
+        }
+
+        this.actual.forEach(fn, context);
+    }
+
+    public equals(other:any):boolean {
+        if (this === other) {
+            return true;
+        }
+
+        if (!(other instanceof StringMap)) {
+            return false;
+        }
+
+        return equals(this.actual, other.actual);
+    }
+}
 
 /**
  * The q module allows you to modify complex persistent structures in a simple way.
