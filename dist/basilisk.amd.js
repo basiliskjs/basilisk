@@ -727,230 +727,12 @@ root['basilisk'] = factory(req, exp, mod);
       v.pop = pop;
   })(v || (v = {}));
 
-  (function (_hamt) {
-      _hamt.BITS = 5, _hamt.WIDTH = 1 << _hamt.BITS, _hamt.MASK = _hamt.WIDTH - 1;
+  (function (hamt) {
+      hamt.BITS = 5, hamt.WIDTH = 1 << hamt.BITS, hamt.MASK = hamt.WIDTH - 1;
 
       function mask(shift, value) {
-          return (value >> shift) & _hamt.MASK;
+          return (value >> shift) & hamt.MASK;
       }
-
-      function hashCode(key) {
-          var t = typeof key;
-
-          if (t === 'string') {
-              return _stringHash(key);
-          } else if (t === 'number') {
-              return (key >= 0) ? key : -1 * key;
-          } else if (t === 'boolean') {
-              return key + 0;
-          } else if (key === undefined || key === null) {
-              return 0;
-          }
-
-          if (typeof key['hashCode'] !== 'function') {
-              throw "TypeError: object must support .hashCode to be a member of a hash function.";
-          }
-
-          var res = key['hashCode']();
-          if (typeof res !== 'number') {
-              throw "TypeError: hashCode must return a number.";
-          }
-          return res;
-      }
-      _hamt.hashCode = hashCode;
-
-      // TODO pick a decent hash function.
-      // Taken from http://www.cse.yorku.ca/~oz/hash.html
-      function _stringHash(source) {
-          if (source === null || source === undefined) {
-              return 0;
-          } else if (typeof source !== 'string') {
-              throw "TypeError: only strings are supported for hashing.";
-          }
-
-          var hash = 0, current;
-
-          for (var i = 0; i < source.length; i++) {
-              current = source.charCodeAt(i);
-              hash = current + (hash << 6) + (hash << 16) - hash;
-          }
-
-          return hash;
-      }
-
-      var PersistentHashMap = (function () {
-          function PersistentHashMap(ignored, hashFn, root) {
-              if (ignored !== undefined) {
-                  throw "TypeError: constructor is private: please use .from to create a new HashMap";
-              }
-              this.hashFn = hashFn;
-              this.root = root;
-              freeze(this);
-          }
-          PersistentHashMap.prototype.get = function (key, default_) {
-              if (this.root === null) {
-                  return default_;
-              }
-              return this.root.get(0, this.hashFn(key), key, default_);
-          };
-
-          PersistentHashMap.prototype.has = function (key) {
-              if (this.root === null) {
-                  return false;
-              }
-              var NOTFOUND = {};
-              return (this.root.get(0, this.hashFn(key), key, NOTFOUND) !== NOTFOUND);
-          };
-
-          PersistentHashMap.prototype.set = function (key, value) {
-              var newroot;
-              if (this.root === null) {
-                  newroot = new Leaf(undefined, this.hashFn(key), key, value);
-              } else {
-                  newroot = this.root.set(0, this.hashFn(key), key, value);
-              }
-
-              if (newroot === this.root) {
-                  return this;
-              }
-
-              return new hamt.PersistentHashMap(undefined, this.hashFn, newroot);
-          };
-
-          PersistentHashMap.prototype.delete = function (key) {
-              if (this.root === null) {
-                  return this;
-              }
-
-              var newroot = this.root.delete(0, this.hashFn(key), key);
-              if (newroot === this.root) {
-                  return this;
-              }
-
-              return new PersistentHashMap(undefined, this.hashFn, newroot);
-          };
-
-          PersistentHashMap.prototype.forEach = function (fn, context) {
-              if (typeof context === "undefined") { context = undefined; }
-              if (this.root === null) {
-                  return;
-              }
-
-              this.root.forEach(fn, context, this);
-          };
-
-          PersistentHashMap.from = function (hashFn) {
-              if (typeof hashFn !== 'function') {
-                  throw "TypeError: Must provide a hash function to .from";
-              }
-              return new PersistentHashMap(undefined, hashFn, null);
-          };
-
-          PersistentHashMap.prototype.equals = function (other) {
-              if (this === other) {
-                  return true;
-              }
-
-              if (!(other instanceof PersistentHashMap)) {
-                  return false;
-              }
-
-              if (this.hashFn !== other.hashFn) {
-                  return false;
-              }
-
-              // TODO we can go faster than this.
-              var diff = false;
-              this.forEach(function (item, key) {
-                  if (!exports.equals(item, other.get(key))) {
-                      diff = true;
-                  }
-              });
-
-              return diff;
-          };
-          return PersistentHashMap;
-      })();
-      _hamt.PersistentHashMap = PersistentHashMap;
-
-      var PersistentStringMap = (function () {
-          function PersistentStringMap(ignored, actual) {
-              if (ignored !== undefined) {
-                  throw "TypeError: constructor is private - use the .from methods to create new StringMaps";
-              }
-              this.actual = actual;
-              freeze(this);
-          }
-          PersistentStringMap.prototype.get = function (key, default_) {
-              return this.actual.get(key, default_);
-          };
-
-          PersistentStringMap.prototype.has = function (key) {
-              if (this.actual === null) {
-                  return false;
-              }
-              var NOTFOUND = {};
-              return (this.actual.get(key, NOTFOUND) !== NOTFOUND);
-          };
-
-          PersistentStringMap.prototype.set = function (key, value) {
-              var newactual = this.actual.set(key, value);
-              if (newactual === this.actual) {
-                  return this;
-              }
-
-              return new hamt.PersistentStringMap(undefined, newactual);
-          };
-
-          PersistentStringMap.prototype.delete = function (key) {
-              var newactual = this.actual.delete(key);
-              if (newactual === this.actual) {
-                  return this;
-              }
-
-              return new hamt.PersistentStringMap(undefined, newactual);
-          };
-
-          PersistentStringMap.from = function (sample) {
-              if (sample === null || sample === undefined) {
-                  return new PersistentStringMap(undefined, new PersistentHashMap(undefined, _stringHash, null));
-              } else if (sample instanceof PersistentStringMap) {
-                  return sample;
-              } else {
-                  // make a new item, and apply all children.
-                  var hamt = new PersistentHashMap(undefined, _stringHash, null);
-                  for (var key in sample) {
-                      if (Object.hasOwnProperty.call(sample, key)) {
-                          hamt = hamt.set(key, sample[key]);
-                      }
-                  }
-                  return new PersistentStringMap(undefined, hamt);
-              }
-          };
-
-          PersistentStringMap.prototype.forEach = function (fn, context) {
-              if (typeof context === "undefined") { context = undefined; }
-              if (this.actual === null) {
-                  return;
-              }
-
-              this.actual.forEach(fn, context);
-          };
-
-          PersistentStringMap.prototype.equals = function (other) {
-              if (this === other) {
-                  return true;
-              }
-
-              if (!(other instanceof PersistentStringMap)) {
-                  return false;
-              }
-
-              return exports.equals(this.actual, other.actual);
-          };
-          return PersistentStringMap;
-      })();
-      _hamt.PersistentStringMap = PersistentStringMap;
 
       // A very simple interior node which uses a full array for storin children.
       // Uses the fact that javascript arrays are sparse.  MEASURE then change if it actually
@@ -965,24 +747,24 @@ root['basilisk'] = factory(req, exp, mod);
               //            freeze(this);
           }
           Interior.prototype.get = function (shift, hashCode, key, default_) {
-              var index = ((hashCode >> shift) & _hamt.MASK);
+              var index = ((hashCode >> shift) & hamt.MASK);
 
               if (this.contents[index] === undefined) {
                   return default_;
               } else {
-                  return this.contents[index].get(shift + _hamt.BITS, hashCode, key, default_);
+                  return this.contents[index].get(shift + hamt.BITS, hashCode, key, default_);
               }
           };
 
           Interior.prototype.set = function (shift, hashCode, key, value) {
-              var index = (hashCode >> shift) & _hamt.MASK;
+              var index = (hashCode >> shift) & hamt.MASK;
 
               if (this.contents[index] === undefined) {
                   var changed = this.contents.slice(0);
                   changed[index] = new Leaf(undefined, hashCode, key, value);
                   return new Interior(undefined, changed);
               } else {
-                  var newchild = this.contents[index].set(shift + _hamt.BITS, hashCode, key, value);
+                  var newchild = this.contents[index].set(shift + hamt.BITS, hashCode, key, value);
                   if (newchild === this.contents[index]) {
                       return this;
                   }
@@ -998,7 +780,7 @@ root['basilisk'] = factory(req, exp, mod);
               if (this.contents[index] === undefined) {
                   return this;
               } else {
-                  var newval = this.contents[index].delete(shift + _hamt.BITS, hashCode, key), changed = this.contents.slice(0), population = 0, instance = undefined;
+                  var newval = this.contents[index].delete(shift + hamt.BITS, hashCode, key), changed = this.contents.slice(0), population = 0, instance = undefined;
 
                   if (newval === null) {
                       newval = undefined;
@@ -1034,7 +816,7 @@ root['basilisk'] = factory(req, exp, mod);
           };
           return Interior;
       })();
-      _hamt.Interior = Interior;
+      hamt.Interior = Interior;
 
       var Leaf = (function () {
           function Leaf(ignore, hashCode, key, value) {
@@ -1084,7 +866,7 @@ root['basilisk'] = factory(req, exp, mod);
           };
           return Leaf;
       })();
-      _hamt.Leaf = Leaf;
+      hamt.Leaf = Leaf;
 
       var Collision = (function () {
           function Collision(ignore, hashCode, values) {
@@ -1147,14 +929,232 @@ root['basilisk'] = factory(req, exp, mod);
           };
           return Collision;
       })();
-      _hamt.Collision = Collision;
+      hamt.Collision = Collision;
   })(exports.hamt || (exports.hamt = {}));
   var hamt = exports.hamt;
 
-  exports.StringMap = hamt.PersistentStringMap;
-  exports.HashMap = hamt.PersistentHashMap;
+  // Taken from http://www.cse.yorku.ca/~oz/hash.html
+  function _stringHash(source) {
+      if (source === null || source === undefined) {
+          return 0;
+      } else if (typeof source !== 'string') {
+          throw "TypeError: only strings are supported for hashing.";
+      }
 
-  exports.hashCode = hamt.hashCode;
+      var hash = 0, current;
+
+      for (var i = 0; i < source.length; i++) {
+          current = source.charCodeAt(i);
+          hash = current + (hash << 6) + (hash << 16) - hash;
+      }
+
+      return hash;
+  }
+
+  function hashCode(key) {
+      var t = typeof key;
+
+      if (t === 'string') {
+          return _stringHash(key);
+      } else if (t === 'number') {
+          return (key >= 0) ? key : -1 * key;
+      } else if (t === 'boolean') {
+          return key + 0;
+      } else if (key === undefined || key === null) {
+          return 0;
+      }
+
+      if (typeof key['hashCode'] !== 'function') {
+          throw "TypeError: object must support .hashCode to be a member of a hash function.";
+      }
+
+      var res = key['hashCode']();
+      if (typeof res !== 'number') {
+          throw "TypeError: hashCode must return a number.";
+      }
+      return res;
+  }
+  exports.hashCode = hashCode;
+
+  var HashMap = (function () {
+      function HashMap(ignored, hashFn, root) {
+          if (ignored !== undefined) {
+              throw "TypeError: constructor is private: please use .from to create a new HashMap";
+          }
+          this.hashFn = hashFn;
+          this.root = root;
+          freeze(this);
+      }
+      HashMap.prototype.get = function (key, default_) {
+          if (this.root === null) {
+              return default_;
+          }
+          return this.root.get(0, this.hashFn(key), key, default_);
+      };
+
+      HashMap.prototype.has = function (key) {
+          if (this.root === null) {
+              return false;
+          }
+          var NOTFOUND = {};
+          return (this.root.get(0, this.hashFn(key), key, NOTFOUND) !== NOTFOUND);
+      };
+
+      HashMap.prototype.set = function (key, value) {
+          var newroot;
+          if (this.root === null) {
+              newroot = new hamt.Leaf(undefined, this.hashFn(key), key, value);
+          } else {
+              newroot = this.root.set(0, this.hashFn(key), key, value);
+          }
+
+          if (newroot === this.root) {
+              return this;
+          }
+
+          return new HashMap(undefined, this.hashFn, newroot);
+      };
+
+      HashMap.prototype.delete = function (key) {
+          if (this.root === null) {
+              return this;
+          }
+
+          var newroot = this.root.delete(0, this.hashFn(key), key);
+          if (newroot === this.root) {
+              return this;
+          }
+
+          return new HashMap(undefined, this.hashFn, newroot);
+      };
+
+      HashMap.prototype.forEach = function (fn, context) {
+          if (typeof context === "undefined") { context = undefined; }
+          if (this.root === null) {
+              return;
+          }
+
+          this.root.forEach(fn, context, this);
+      };
+
+      HashMap.from = function (hashFn) {
+          if (typeof hashFn !== 'function') {
+              throw "TypeError: Must provide a hash function to .from";
+          }
+          return new HashMap(undefined, hashFn, null);
+      };
+
+      HashMap.prototype.equals = function (other) {
+          var _this = this;
+          if (this === other) {
+              return true;
+          }
+
+          if (!(other instanceof HashMap)) {
+              return false;
+          }
+
+          if (this.hashFn !== other.hashFn) {
+              return false;
+          }
+
+          // TODO we can go faster than this.
+          var diff = false;
+          this.forEach(function (item, key) {
+              if (!exports.equals(item, other.get(key))) {
+                  diff = true;
+              }
+          });
+          other.forEach(function (item, key) {
+              if (!exports.equals(item, _this.get(key))) {
+                  diff = true;
+              }
+          });
+
+          return !diff;
+      };
+      return HashMap;
+  })();
+  exports.HashMap = HashMap;
+
+  var StringMap = (function () {
+      function StringMap(ignored, actual) {
+          if (ignored !== undefined) {
+              throw "TypeError: constructor is private - use the .from methods to create new StringMaps";
+          }
+          this.actual = actual;
+          freeze(this);
+      }
+      StringMap.prototype.get = function (key, default_) {
+          return this.actual.get(key, default_);
+      };
+
+      StringMap.prototype.has = function (key) {
+          if (this.actual === null) {
+              return false;
+          }
+          var NOTFOUND = {};
+          return (this.actual.get(key, NOTFOUND) !== NOTFOUND);
+      };
+
+      StringMap.prototype.set = function (key, value) {
+          var newactual = this.actual.set(key, value);
+          if (newactual === this.actual) {
+              return this;
+          }
+
+          return new StringMap(undefined, newactual);
+      };
+
+      StringMap.prototype.delete = function (key) {
+          var newactual = this.actual.delete(key);
+          if (newactual === this.actual) {
+              return this;
+          }
+
+          return new StringMap(undefined, newactual);
+      };
+
+      StringMap.from = function (sample) {
+          if (sample === null || sample === undefined) {
+              return new StringMap(undefined, new HashMap(undefined, _stringHash, null));
+          } else if (sample instanceof StringMap) {
+              return sample;
+          } else {
+              // make a new item, and apply all children.
+              var hamt = new HashMap(undefined, _stringHash, null);
+              for (var key in sample) {
+                  if (Object.hasOwnProperty.call(sample, key)) {
+                      hamt = hamt.set(key, sample[key]);
+                  }
+              }
+              return new StringMap(undefined, hamt);
+          }
+      };
+
+      StringMap.prototype.forEach = function (fn, context) {
+          if (typeof context === "undefined") { context = undefined; }
+          if (this.actual === null) {
+              return;
+          }
+
+          this.actual.forEach(fn, context);
+      };
+
+      StringMap.prototype.equals = function (other) {
+          if (this === other) {
+              return true;
+          }
+
+          if (!(other instanceof StringMap)) {
+              return false;
+          }
+
+          return exports.equals(this.actual, other.actual);
+      };
+      return StringMap;
+  })();
+  exports.StringMap = StringMap;
 
   /**
   * The q module allows you to modify complex persistent structures in a simple way.
