@@ -53,3 +53,5 @@ User Guide
 
    why-values
    getting-started
+   collections
+   query
