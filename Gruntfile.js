@@ -79,11 +79,25 @@ module.exports = function(grunt) {
 
         copy: {
             main: {
+		options: {
+			process: function (content, srcpath) { 
+				if (!/\.d\.ts/.test(srcpath)) { return content; }
+				return 'declare module "basilisk" { ' + content.split('export declare ').join('export ') + '}'; 
+			}
+		},
                 files: [
                     { expand:true, src: 'build-amd/basilisk.js', dest: 'dist/', rename: function (dest, src) { return dest + 'basilisk.amd.js'; } },
-                    { expand:true, src: 'build/basilisk.js', dest: 'dist/', rename: function (dest, src) { return dest + 'basilisk.commonjs.js'; } }
-
+                    { expand:true, src: 'build/basilisk.js', dest: 'dist/', rename: function (dest, src) { return dest + 'basilisk.commonjs.js'; } },
+                    { expand:true, src: 'src/basilisk.ts', dest: 'dist/', rename: function (dest, src) { return dest + 'basilisk.ts'; } },
+                    { 
+			expand:true, 
+			src: 'build/basilisk.d.ts', 
+			dest: 'dist/', 
+			rename: function (dest, src) { return dest + 'basilisk.amd.d.ts'; },
+			options: { noProcess: false, }
+		    }
                 ]
+
 
             }
         }
