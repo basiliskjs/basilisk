@@ -10,7 +10,7 @@ data.
 .. sourcecode:: javascript
 
     var Person = basilisk.makeStruct(['name', 'age']),
-        example = new Address({ name: 'Joe', age: 32 }),
+        example = new Person({ name: 'Joe', age: 32 }),
         older = example.with_('age', example.age + 2);
 
 Making code which updates deeply nested structures **simple** and **clear** 

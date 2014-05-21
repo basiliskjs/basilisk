@@ -1,6 +1,8 @@
 Basilisk is a library for programming with **values** in Javascript.  A value is immutable - it
 does not change - though it is easy to generate new values from old ones.
 
+Full documentation is [available on readthedocs](http://basilisk.readthedocs.org/)
+
 ```javascript
 var Person = basilisk.makeStruct(['name', 'age', 'addresses']),
     Address = basilisk.makeStruct(['city', 'country']),
@@ -42,7 +44,7 @@ console.log('since he has not moved, joe has the same addresses:',
 What's included
 ===============
 
-* Struct library with change helpers.
+* Structs with new-version helpers.
 * Persistent data structures (Vector, HashMap, StringMap) with a Javascript flavor.
 * A Query/Update utility to make deep changes in a data store easy to understand. 
 
@@ -60,6 +62,12 @@ Installing Basilisk
 ===================
 
 * Bower: ``bower install basilisk``
+
+Contributions
+=============
+
+Contributions are very welcome!  Basilisk is MIT Licensed, so you can use 
+Basilisk in your applications without worry.
 
 Inspired by
 ===========
