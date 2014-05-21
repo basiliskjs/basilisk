@@ -55,3 +55,9 @@ User Guide
    getting-started
    collections
    query
+
+License
+-------
+
+Basilisk is licensed under the MIT License by 
+`MOO Print Ltd <http://www.moo.com/>`_.

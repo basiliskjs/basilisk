@@ -114,19 +114,30 @@ StringMap
 
 .. method:: StringMap.get(key : string[, default: any = undefined]) -> any
 
-    x
+    Retrieve the value stored against the key.  If it is not present,
+    then the default will be returned (if none is provided, ``undefined`` is 
+    returned.)
 
 .. method:: StringMap.set(key : string, value: any) -> StringMap
 
-    x
+    Returns a new StringMap with the added relation.  The original map is 
+    **not changed**.
 
 .. method:: StringMap.delete(key : string) -> StringMap
 
-    x
+    Returns a new StringMap with the relation removed, if it was ever present.  
+    The original map is **not changed**.
+
+.. method:: StringMap.has(key : string) -> boolean
+
+    Returns whether the specified key is set in the map.  Note that ``undefined`` 
+    is a perfectly legitimate value, so "set" is not the same as "not undefined".
 
 .. method:: StringMap.forEach(function (value : any, key : string) [, context: any = undefined]) -> any
 
-    x
+    Iterate over the elements of the map in an undefined order.  The function will be called
+    with the value and key for each item in turn.  Optionally, you can specify a context
+    which will appear as ``this`` to the function.
 
 HashMap
 =======
@@ -155,20 +166,31 @@ HashMap
 
 .. method:: HashMap.get(key : any[, default: any = undefined]) -> any
 
-    x
+    Retrieve the value stored against the key.  If it is not present,
+    then the default will be returned (if none is provided, ``undefined`` is 
+    returned.)
 
 .. method:: HashMap.set(key : any, value: any) -> HashMap
 
-    x
+    Returns a new HashMap with the added relation.  The original map is 
+    **not changed**.
 
-.. method:: HashMap.delete(key : any)
+.. method:: HashMap.delete(key : any) -> HashMap
 
-    x
+    Returns a new HashMap with the relation removed, if it was ever present.  
+    The original map is **not changed**.
+
+.. method:: HashMap.has(key : any) -> boolean
+
+    Returns whether the specified key is set in the map.  Note that ``undefined`` 
+    is a perfectly legitimate value, so "set" is not the same as "not undefined".
 
 .. method:: HashMap.forEach(function (value : any, key : any) [, context: any = undefined])
 
-    x
-
+    
+    Iterate over the elements of the map in an undefined order.  The function will be called
+    with the value and key for each item in turn.  Optionally, you can specify a context
+    which will appear as ``this`` to the function.
 
 .. function:: hashCode(key:any) -> uint
 
