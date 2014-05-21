@@ -1,0 +1,17 @@
+/.idea/
+/.grunt/
+/.tscache
+**/.baseDir.ts 
+tests/.baseDir.ts 
+**/.baseDir.js
+**/.baseDir.js.map
+/basilisk.iml
+/node_modules/
+/build/
+/build-amd/
+/src/**/*.map
+/src/**/.baseDir.*
+/tests/**/*.js
+/tests/**/*.map
+/tests/.baseDir.ts
+/docs/
