@@ -60,7 +60,7 @@ which is simple to understand.
         }), 
             b;
 
-        b = b$.replace(a, ['addresses', b$.at(0), 'country'], function (country) {
+        b = b$.swap(a, ['addresses', b$.at(0), 'country'], function (country) {
             // normalise common abbreviations of South Africa 
             if (country === 'RSA' || country == 'ZA') {
                 return 'South Africa';
