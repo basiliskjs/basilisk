@@ -61,7 +61,10 @@ Read all about it on [readthedocs](http://basilisk.readthedocs.org/en/latest/).
 Installing Basilisk
 ===================
 
+Note that you need to have an ES5 Shim in place to use Basilisk on older browsers.
+
 * Bower: ``bower install basilisk``
+* Node: ``npm install basilisk``
 
 Contributions
 =============
