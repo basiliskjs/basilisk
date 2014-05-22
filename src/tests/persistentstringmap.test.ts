@@ -56,5 +56,13 @@ describe('PersistentStringMap', function () {
             expect(basilisk.equals(eg1, eg2)).toBe(basilisk.equals(eg2, eg1));
             expect(basilisk.equals(eg1, eg2)).toBe(false);
         });
+
+        it("Can remove items from map", function () {
+            var example = SM.from({ a: 'hello', b: 'world'}),
+                actual = example.remove('a');
+
+            expect(actual.get('a')).toBeUndefined();
+            expect(actual.get('b')).toBe('world');
+        });
     });
 });

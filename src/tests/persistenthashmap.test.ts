@@ -80,7 +80,7 @@ describe('PersistentHashMap', function () {
             expect(map.get('a')).toBe('a');
 
             // now unset the items.
-            map = map.delete('c');
+            map = map.remove('c');
 
             expect(map['root'] instanceof basilisk.hamt.Interior).toBe(true);
             expect(map['root']['contents'][1] instanceof basilisk.hamt.Interior).toBe(true);
@@ -88,7 +88,7 @@ describe('PersistentHashMap', function () {
             expect(nested['contents'][0] instanceof basilisk.hamt.Leaf).toBe(true);
             expect(nested['contents'][3] instanceof basilisk.hamt.Leaf).toBe(true);
 
-            map = map.delete('b');
+            map = map.remove('b');
             expect(map['root'] instanceof basilisk.hamt.Leaf).toBe(true);
         });
 

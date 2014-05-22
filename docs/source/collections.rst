@@ -123,7 +123,7 @@ StringMap
     Returns a new StringMap with the added relation.  The original map is 
     **not changed**.
 
-.. method:: StringMap.delete(key : string) -> StringMap
+.. method:: StringMap.remove(key : string) -> StringMap
 
     Returns a new StringMap with the relation removed, if it was ever present.  
     The original map is **not changed**.
@@ -175,7 +175,7 @@ HashMap
     Returns a new HashMap with the added relation.  The original map is 
     **not changed**.
 
-.. method:: HashMap.delete(key : any) -> HashMap
+.. method:: HashMap.remove(key : any) -> HashMap
 
     Returns a new HashMap with the relation removed, if it was ever present.  
     The original map is **not changed**.
