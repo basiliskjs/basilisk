@@ -774,13 +774,13 @@ root['basilisk'] = factory(req, exp, mod);
               }
           };
 
-          Interior.prototype.delete = function (shift, hashCode, key) {
+          Interior.prototype.remove = function (shift, hashCode, key) {
               var index = mask(shift, hashCode);
 
               if (this.contents[index] === undefined) {
                   return this;
               } else {
-                  var newval = this.contents[index].delete(shift + hamt.BITS, hashCode, key), changed = this.contents.slice(0), population = 0, instance = undefined;
+                  var newval = this.contents[index].remove(shift + hamt.BITS, hashCode, key), changed = this.contents.slice(0), population = 0, instance = undefined;
 
                   if (newval === null) {
                       newval = undefined;
@@ -854,7 +854,7 @@ root['basilisk'] = factory(req, exp, mod);
               }
           };
 
-          Leaf.prototype.delete = function (shift, hashCode, key) {
+          Leaf.prototype.remove = function (shift, hashCode, key) {
               // just remove ourselves.
               return null;
           };
@@ -900,7 +900,7 @@ root['basilisk'] = factory(req, exp, mod);
               return new Collision(undefined, hashCode, newvalues);
           };
 
-          Collision.prototype.delete = function (shift, hashCode, key) {
+          Collision.prototype.remove = function (shift, hashCode, key) {
               var newvalues = [];
               for (var i = 0; i < this.values.length / 2; i++) {
                   if (!exports.equals(this.values[2 * i], key)) {
@@ -1015,12 +1015,12 @@ root['basilisk'] = factory(req, exp, mod);
           return new HashMap(undefined, this.hashFn, newroot);
       };
 
-      HashMap.prototype.delete = function (key) {
+      HashMap.prototype.remove = function (key) {
           if (this.root === null) {
               return this;
           }
 
-          var newroot = this.root.delete(0, this.hashFn(key), key);
+          var newroot = this.root.remove(0, this.hashFn(key), key);
           if (newroot === this.root) {
               return this;
           }
@@ -1106,8 +1106,8 @@ root['basilisk'] = factory(req, exp, mod);
           return new StringMap(undefined, newactual);
       };
 
-      StringMap.prototype.delete = function (key) {
-          var newactual = this.actual.delete(key);
+      StringMap.prototype.remove = function (key) {
+          var newactual = this.actual.remove(key);
           if (newactual === this.actual) {
               return this;
           }
