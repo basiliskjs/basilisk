@@ -1,45 +1,49 @@
-Basilisk is a library for programming with **values** in Javascript.  A value is immutable - it
-does not change - though it is easy to generate new values from old ones.
+Basilisk is a **value** library for Javascript.  It allows you to create
+**immutable** data in a familiar way, and to **derive new versions** from that
+data.
 
 Full documentation is [available on readthedocs](http://basilisk.readthedocs.org/)
 
+
 ```javascript
-var Person = basilisk.makeStruct(['name', 'age', 'addresses']),
+
+var Person = basilisk.makeStruct(['name', 'age']),
+    example = new Person({ name: 'Joe', age: 32 }),
+    older = example.with_('age', example.age + 2);
+```
+
+Making code which updates deeply nested structures **simple** and **clear** 
+is library's main aim.
+
+```javascript    
+// we make a quick alias, to reduce clutter in the code.
+var b$ = basilisk.query,
+
+    Person = basilisk.makeStruct(['name', 'age', 'addresses']),
     Address = basilisk.makeStruct(['city', 'country']),
-    joe;
-    
-joe = new Person({
-    name: 'Joe Bloggs',
-    age: 32,
-    addresses: basilisk.Vector.from([
-        new Address({
-            city: 'London',
-            country: 'United Kingdom'
-        }),
-        new Address({
-          city: 'Cape Town',
-          country: 'South Africa'
-        })
-    ]);
+
+    example = new Person({
+        name: 'Joe',
+        age: 32, 
+
+        addresses = basilisk.Vector.from([
+            new Address({ city: 'London', country: 'United Kingdom' }),
+            new Address({ city: 'Cape Town', country: 'South Africa' })
+        ])
+    }),
+    example2, example3;
+
+// first we create a new object, with a US address added.
+
+example2 = b$.swap(example, ['addresses'], function (current) {
+    return current.push(new Address({ city: 'Boston', country: 'USA' }));
 });
+
+// and if we have to replace a part of that new address.
+
+example3 = b$.replace(example2, ['addresses', b$.at(2), 'city'], 'New York');
 ```
 
-The key idea in Basilisk is that values are better when you have a consistent
-way to **create new values from old ones.**
-
-```javascript
-
-// given joe from above.
-var getOlder = function (past) {
-    return past.with_('age', past.age + 1);
-}
-
-var joeNextYear = getOlder(joe);
-
-console.log('joe will be', joeNextYear.age);
-console.log('since he has not moved, joe has the same addresses:', 
-   joe.addresses === joeNextYear.addresses); 
-```
 
 What's included
 ===============
