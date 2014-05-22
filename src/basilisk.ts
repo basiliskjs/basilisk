@@ -748,7 +748,7 @@ export module hamt {
     export interface Node<K, T> {
         get(shift:number, hashCode:number, key:K, default_:T):T;
         set(shift:number, hashCode:number, key:K, value:T):Node<K, T>;
-        delete(shift:number, hashCode:number, key:K):Node<K, T>;
+        remove(shift:number, hashCode:number, key:K):Node<K, T>;
         forEach(fn:(value:T, key:K, source:any) => any, context:any, source:any):void;
     }
 
@@ -795,13 +795,13 @@ export module hamt {
             }
         }
 
-        delete(shift:number, hashCode:number, key:K):Node<K, T> {
+        remove(shift:number, hashCode:number, key:K):Node<K, T> {
             var index = mask(shift, hashCode);
 
             if (this.contents[index] === undefined) {
                 return this;
             } else {
-                var newval = this.contents[index].delete(shift + BITS, hashCode, key),
+                var newval = this.contents[index].remove(shift + BITS, hashCode, key),
                     changed = this.contents.slice(0),
                     population = 0,
                     instance:Node<K, T> = undefined;
@@ -885,7 +885,7 @@ export module hamt {
             }
         }
 
-        public delete(shift:number, hashCode:number, key:K):hamt.Node<K, T> {
+        public remove(shift:number, hashCode:number, key:K):hamt.Node<K, T> {
             // just remove ourselves.
             return null;
         }
@@ -931,7 +931,7 @@ export module hamt {
             return new Collision<K, T>(undefined, hashCode, newvalues);
         }
 
-        public delete(shift:number, hashCode:number, key:K):hamt.Node<K, T> {
+        public remove(shift:number, hashCode:number, key:K):hamt.Node<K, T> {
             var newvalues = [];
             for (var i = 0; i < this.values.length / 2; i++) {
                 if (!equals(this.values[2 * i], key)) {
@@ -1041,12 +1041,12 @@ export class HashMap<K, T> implements Sequence<T>  {
         return new HashMap<K, T>(undefined, this.hashFn, newroot);
     }
 
-    public delete(key:K):HashMap<K, T> {
+    public remove(key:K):HashMap<K, T> {
         if (this.root === null) {
             return this;
         }
 
-        var newroot = this.root.delete(0, this.hashFn(key), key);
+        var newroot = this.root.remove(0, this.hashFn(key), key);
         if (newroot === this.root) {
             return this;
         }
@@ -1130,8 +1130,8 @@ export class StringMap<T> implements Sequence<T>  {
         return new StringMap<T>(undefined, newactual);
     }
 
-    public delete(key:string):StringMap<T> {
-        var newactual = this.actual.delete(key);
+    public remove(key:string):StringMap<T> {
+        var newactual = this.actual.remove(key);
         if (newactual === this.actual) {
             return this;
         }
