@@ -99,3 +99,23 @@ who is trying to list Gill's current address.  We would need to
  ii. Add a listener to ``gill.addresses`` in case the ``home`` value was replaced
  iii.  Add a listener to ``gill.addresses['home']`` in case ``home`` is changed in some way.
 
+ That's a huge amount of book keeping, just to track potential changes in one place.
+
+ The alternative approach (using values) is to 
+
+  i.  Be notified of all changes at the root.
+  ii. Use ``===`` to quickly (pointer comparison, so very fast) check if the
+      properties you care about (``.currentAddress``, ``.addresses``, 
+      ``.addresses.get(gill.currentAddress)``) might have changed.
+
+Vitally, you never have to bind to current instances of the child values: you only
+ever need access to a single variable at the top of the tree.
+
+In short
+--------
+
+Using events to observe changes to properties is a very **easy** solution to knowing 
+about changes, but it makes **composite** objects very hard to reason about.  
+
+Using values makes working with **composite** objects very simple: more composition
+doesn't lead to spiralling complexity. 
