@@ -530,14 +530,17 @@ export class Vector<T> implements Sequence<T> {
         var that = this,
             currentIndex = 0,
             scan = function (node:Array<any>, level:number):void {
-            if (level === 0) {
-                node.forEach(function (item:T, index:number, arr:any[]):void { fn(item, currentIndex, that); currentIndex += 1 }, context);
-            } else {
-                for (var i=0; i<node.length; i++) {
-                    scan(node[i], level - v.BITS);
+                if (level === 0) {
+                    node.forEach(function (item:T, index:number, arr:any[]):void {
+                        fn.call(context, item, currentIndex, that);
+                        currentIndex += 1;
+                    });
+                } else {
+                    for (var i=0; i<node.length; i++) {
+                        scan(node[i], level - v.BITS);
+                    }
                 }
-            }
-        };
+            };
 
         scan(this.root, this.shift);
     }
