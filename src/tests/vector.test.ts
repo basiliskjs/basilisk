@@ -189,6 +189,17 @@ describe("PersistentVector", function () {
 
             expect(called).toBe(3);
         });
+
+        it('can operate in another context', function () {
+            var obj = { secret: 'cat' },
+                vals = V.from(['dog', 'cat', 'tree']),
+                results = [];
+            vals.forEach(function (value) {
+                results.push(this.secret + value);
+            }, obj);
+
+            expect(results).toEqual(['catdog', 'catcat', 'cattree']);
+        });
     });
 
     describe('.filter', function () {
@@ -212,6 +223,17 @@ describe("PersistentVector", function () {
 
             expect(actual.length).toEqual(4);
             expect(actual).toBe(vals);
+        });
+
+        it('can operate in another context', function () {
+            var obj = { secret: 'cat' },
+                vals = V.from(['dog', 'cat', 'tree']),
+                results = vals.filter(function (value) {
+                    return this.secret === value;
+                }, obj);
+
+            expect(results.length).toEqual(1);
+            expect(results.get(0)).toEqual('cat');
         });
     });
 
