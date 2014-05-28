@@ -191,6 +191,30 @@ describe("PersistentVector", function () {
         });
     });
 
+    describe('.filter', function () {
+        it('returns only where the function returns truthy', function () {
+            var vals = V.from([
+                    ['one', false],
+                    ['two', true],
+                    ['three', 'bob'],
+                    ['four', undefined]
+                ]),
+                actual = vals.filter(function (value) { return value[1]; });
+
+            expect(actual.length).toEqual(2);
+            expect(actual.get(0)[0]).toEqual('two');
+            expect(actual.get(1)[0]).toEqual('three');
+        });
+
+        it('returns itself when everything passes', function () {
+            var vals = V.from([1,2,3,4]),
+                actual = vals.filter(function (value) { return true; });
+
+            expect(actual.length).toEqual(4);
+            expect(actual).toBe(vals);
+        });
+    });
+
     describe('.equals', function () {
         it("Should compare simple vectors equally.", function () {
             var empty1 = V.from([]), empty2 = V.from([]),
