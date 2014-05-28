@@ -530,14 +530,17 @@ export class Vector<T> implements Sequence<T> {
         var that = this,
             currentIndex = 0,
             scan = function (node:Array<any>, level:number):void {
-            if (level === 0) {
-                node.forEach(function (item:T, index:number, arr:any[]):void { fn(item, currentIndex, that); currentIndex += 1 }, context);
-            } else {
-                for (var i=0; i<node.length; i++) {
-                    scan(node[i], level - v.BITS);
+                if (level === 0) {
+                    node.forEach(function (item:T, index:number, arr:any[]):void {
+                        fn.call(context, item, currentIndex, that);
+                        currentIndex += 1;
+                    });
+                } else {
+                    for (var i=0; i<node.length; i++) {
+                        scan(node[i], level - v.BITS);
+                    }
                 }
-            }
-        };
+            };
 
         scan(this.root, this.shift);
     }
@@ -572,22 +575,17 @@ export class Vector<T> implements Sequence<T> {
         return same;
     }
 
-    public filter(fn:(value:T, index:number, vect:any) => boolean, context:any = undefined):Sequence<T> {
+    public filter(fn:(value:T, index:number, vect:any) => boolean, context:any = undefined):Vector<T> {
         // TODO filter should be lazy, and only use a minimum sequence.
-        var temp = [],
-            anyChange = false;
+        var temp = [];
 
         this.forEach((item:T, index:number) => {
-            var changed = fn.call(context, item, index, this);
-
-            temp.push(changed);
-
-            if (changed !== item) {
-                anyChange = true;
+            if (fn.call(context, item, index, this)) {
+                temp.push(item);
             }
         });
 
-        if (!anyChange) {
+        if (temp.length === this.length) {
             return this;
         }
 

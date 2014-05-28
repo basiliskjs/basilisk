@@ -189,6 +189,52 @@ describe("PersistentVector", function () {
 
             expect(called).toBe(3);
         });
+
+        it('can operate in another context', function () {
+            var obj = { secret: 'cat' },
+                vals = V.from(['dog', 'cat', 'tree']),
+                results = [];
+            vals.forEach(function (value) {
+                results.push(this.secret + value);
+            }, obj);
+
+            expect(results).toEqual(['catdog', 'catcat', 'cattree']);
+        });
+    });
+
+    describe('.filter', function () {
+        it('returns only where the function returns truthy', function () {
+            var vals = V.from([
+                    ['one', false],
+                    ['two', true],
+                    ['three', 'bob'],
+                    ['four', undefined]
+                ]),
+                actual = vals.filter(function (value) { return value[1]; });
+
+            expect(actual.length).toEqual(2);
+            expect(actual.get(0)[0]).toEqual('two');
+            expect(actual.get(1)[0]).toEqual('three');
+        });
+
+        it('returns itself when everything passes', function () {
+            var vals = V.from([1,2,3,4]),
+                actual = vals.filter(function (value) { return true; });
+
+            expect(actual.length).toEqual(4);
+            expect(actual).toBe(vals);
+        });
+
+        it('can operate in another context', function () {
+            var obj = { secret: 'cat' },
+                vals = V.from(['dog', 'cat', 'tree']),
+                results = vals.filter(function (value) {
+                    return this.secret === value;
+                }, obj);
+
+            expect(results.length).toEqual(1);
+            expect(results.get(0)).toEqual('cat');
+        });
     });
 
     describe('.equals', function () {
