@@ -3,7 +3,7 @@
   "description": "A value library for Javascript - makes immutability simple to work with.",
   "keywords": ["immutability", "values", "react", "functional programming"],
   "bugs": "https://github.com/basiliskjs/basilisk/issues",
-  "version": "0.3.6-pre",
+  "version": "0.3.8-pre",
   "license": "MIT",
   "author": "MOO <techlead@moo.com>",
   "main": "dist/basilisk.commonjs.js",
