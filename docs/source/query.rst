@@ -32,7 +32,7 @@ which is simple to understand.
 
         b = b$.replace(a, ['addresses', b$.at(0), 'country'], 'South Africa');
 
-        a.addresses.get(0).country; // 'United Kingdom';
+        a.addresses.get(0).country; // 'RSA';
         b.addresses.get(0).country; // 'South Africa';
 
     :param initial: a value you wish to derive a new value from.
@@ -55,7 +55,7 @@ which is simple to understand.
         var a = new Person({ 
             'name': 'joe', 
             addresses: new basilisk.Vector.from([
-                new Address({ country: 'United Kingdom' })
+                new Address({ country: 'RSA' })
             ])
         }), 
             b;
@@ -69,7 +69,7 @@ which is simple to understand.
             }
         });
 
-        a.addresses.get(0).country; // 'United Kingdom';
+        a.addresses.get(0).country; // 'RSA';
         b.addresses.get(0).country; // 'South Africa';
 
 
@@ -82,6 +82,11 @@ which is simple to understand.
         The return value will be substituted at the end of the path, in the
         newly created result.
 
+.. function:: basilisk.query.value(root : any, path: PathSegment[]) -> any
+
+    Applies the path to the specified ``root`` and returns the current value
+    at the end of the chain.
+
 .. function:: basilisk.query.path(...pathsegments) -> Path
 
     Create a new Path object from the specified Path Segments.  ``strings`` will
@@ -90,6 +95,8 @@ which is simple to understand.
     :param pathsegments: 
         ``string``'s or ``PathSegment``'s which will be stored and can be
         used to ``swap`` or ``apply``
+
+
 
 Path
 ----

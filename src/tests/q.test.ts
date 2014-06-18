@@ -122,4 +122,13 @@ describe("Query module (Q)", function () {
             expect(q.path(q.at(1)).value(base)).toBe('idx 1');
         });
     });
+
+    describe('.value()', function () {
+        it("Should be able to extract a single entry from an object.", function () {
+            var base = new Simple({ a: 'prop a' });
+
+            expect(q.value(base, ['a'])).toBe('prop a');
+            expect(q.value(base, ['b'])).toBe(undefined);
+        });
+    })
 });

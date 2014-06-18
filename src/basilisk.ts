@@ -1256,6 +1256,10 @@ export module query {
         return path.apply(null, pathParts).replace(root, value);
     }
 
+    export function value(root:any, pathParts:any[]):any {
+        return path.apply(null, pathParts).value(root);
+    }
+
     /**
      * PathSegment function for a Map or Vector object.  Will inspect the current root and
      * descend based on the provided key.
