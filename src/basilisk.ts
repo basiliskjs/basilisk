@@ -519,7 +519,7 @@ export class Vector<T> implements Sequence<T> {
         // the initial special cases mean we cannot be completely empty.
         // but we want a root with more than one (or we can flatten the tree).
 
-        if (root.length === 1) {
+        if (this.root.length === 1) {
             return new Vector<T>(root[0], this.shift - v.BITS, this.length - 1);
         } else {
             return new Vector<T>(root, this.shift, this.length - 1);

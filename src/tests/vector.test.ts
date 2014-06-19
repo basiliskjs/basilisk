@@ -168,6 +168,16 @@ describe("PersistentVector", function () {
                 l = v.length;
             }
         });
+
+        it("Should correctly handle push followed by pop at small counts.", function () {
+            // https://github.com/basiliskjs/basilisk/issues/3
+            var test = V.from(['first']);
+            test = test.push('second');
+            test = test.push('third');
+            test = test.pop();
+            test = test.pop(); // at this point the 'shift' property becomes -5?
+            test = test.push('second again');
+        });
     });
 
     describe('.forEach', function () {
