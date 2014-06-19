@@ -177,6 +177,12 @@ describe("PersistentVector", function () {
             test = test.pop();
             test = test.pop(); // at this point the 'shift' property becomes -5?
             test = test.push('second again');
+            expect(test.length).toBe(2);
+            test = test.pop();
+            test = test.pop();
+            expect(test.length).toBe(0);
+            test = test.push('first again');
+            expect(test.length).toBe(1);
         });
     });
 
