@@ -736,13 +736,6 @@ export module hamt {
         (key:K):number;
     }
 
-
-
-
-
-
-
-
     export interface Node<K, T> {
         get(shift:number, hashCode:number, key:K, default_:T):T;
         set(shift:number, hashCode:number, key:K, value:T):Node<K, T>;
