@@ -102,6 +102,31 @@ describe('PersistentHashMap', function () {
 
             var final = map;
         });
+    });
 
+    describe('.size', function () {
+        var count:number = 2;
+        it("Should work for different keys.", function () {
+            var map = Hash.from<number, number>((key:number):number => { return Math.abs(key); }),
+                correct = true;
+
+            for (var i=0; i < count; i++) {
+                map = map.set(i, i);
+                correct = correct && (map.size == i + 1);
+            }
+            expect(correct).toBe(true);
+        });
+
+        it("Should work for collisions.", function () {
+            var map = Hash.from<number, number>((key:number):number => { return 0; }),
+                correct = true;
+
+            for (var i=0; i < count; i++) {
+                map = map.set(i, i);
+                correct = correct && (map.size == i + 1)
+            }
+
+            expect(correct).toBe(true);
+        })
     });
 });

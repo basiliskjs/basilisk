@@ -139,6 +139,10 @@ StringMap
     with the value and key for each item in turn.  Optionally, you can specify a context
     which will appear as ``this`` to the function.
 
+.. property:: size : number
+
+    The number of items in this StringMap.
+
 HashMap
 =======
 
@@ -203,4 +207,8 @@ HashMap
 
     Hash functions should be fast, deterministic, and well distributed over
     the integers.
+
+.. property:: size : number
+
+    The number of items in this HashMap.
 

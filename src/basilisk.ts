@@ -748,6 +748,7 @@ export module hamt {
         set(shift:number, hashCode:number, key:K, value:T):Node<K, T>;
         remove(shift:number, hashCode:number, key:K):Node<K, T>;
         forEach(fn:(value:T, key:K, source:any) => any, context:any, source:any):void;
+        size:number;
     }
 
     // A very simple interior node which uses a full array for storin children.
@@ -760,9 +761,16 @@ export module hamt {
             }
 
             this.contents = contents;
-//            freeze(this);
+            // the size of an interior node is the sum of all of the sizes of its children.
+            this.size = 0;
+            for (var i=0; i < contents.length; i++) {
+                if (contents[i] !== undefined && contents[i] !== null) {
+                    this.size += contents[i].size;
+                }
+            }
         }
 
+        public size:number;
         private contents:Array<Node<K, T>>;
 
         get(shift:number, hashCode:number, key:K, default_:T):T {
@@ -846,12 +854,13 @@ export module hamt {
             this.hashCode = hashCode;
             this.key = key;
             this.value = value;
-//            freeze(this);
+            this.size = 1;
         }
 
         private hashCode:number;
         private key:K;
         private value:T;
+        public size:number;
 
         get(shift:number, hashCode:number, key:K, default_:T):T {
             if (equals(key, this.key)) {
@@ -897,10 +906,12 @@ export module hamt {
         constructor(ignore:any, hashCode:number, values:Array<any>) {
             this.hashCode = hashCode;
             this.values = values;
-//            freeze(this);
+            this.size = (values) ? values.length / 2 : 0;
         }
         private hashCode:number;
+        // values is an array of [key,value,key,value,key,value...]
         private values:Array<any>;
+        public size:number;
 
         get(shift:number, hashCode:number, key:K, default_:T):T {
             // values is a sequence of key, value, key, value objects.
@@ -1007,11 +1018,14 @@ export class HashMap<K, T> implements Sequence<T>  {
         }
         this.hashFn = hashFn;
         this.root = root;
+        this.size = (root) ? root.size : 0;
         freeze(this);
     }
 
     private hashFn:hamt.HashFn<K>;
     private root:hamt.Node<K, T>;
+
+    public size:number;
 
     public get(key:K, default_?:T):T {
         if (this.root === null) { return default_; }
@@ -1080,18 +1094,19 @@ export class HashMap<K, T> implements Sequence<T>  {
             return false;
         }
 
-        // TODO we can go faster than this.
+        if (this.size !== other.size) {
+            return false;
+        }
+
+        // because we know that we have the same size, we do not
+        // need to check the inverse.
         var diff:boolean = false;
         this.forEach((item:T, key:K) => {
             if (!equals(item, other.get(key))) {
                 diff = true;
             }
         });
-        other.forEach((item:T, key:K) => {
-            if (!equals(item, this.get(key))) {
-                diff = true;
-            }
-        });
+
 
         return !diff;
     }
@@ -1103,10 +1118,12 @@ export class StringMap<T> implements Sequence<T>  {
             throw "TypeError: constructor is private - use the .from methods to create new StringMaps";
         }
         this.actual = actual;
+        this.size = (actual) ? actual.size : 0;
         freeze(this);
     }
 
     private actual:HashMap<string, T>;
+    public size:number;
 
     public get(key:string, default_?:T):T {
 
