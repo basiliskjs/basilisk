@@ -139,6 +139,14 @@ StringMap
     with the value and key for each item in turn.  Optionally, you can specify a context
     which will appear as ``this`` to the function.
 
+.. method:: StringMap.items() -> Vector
+
+    Returns a Vector containing the items in the StringMap, in an undefined order.
+
+.. method:: StringMap.keys() -> Vector
+
+    Returns a Vector containing the keys in the StringMap, in an undefined order.
+
 .. property:: size : number
 
     The number of items in this StringMap.
@@ -195,6 +203,14 @@ HashMap
     Iterate over the elements of the map in an undefined order.  The function will be called
     with the value and key for each item in turn.  Optionally, you can specify a context
     which will appear as ``this`` to the function.
+
+.. method:: HashMap.items() -> Vector
+
+    Returns a Vector containing the items in the StringMap, in an undefined order.
+
+.. method:: HashMap.keys() -> Vector
+
+    Returns a Vector containing the keys in the StringMap, in an undefined order.
 
 .. function:: hashCode(key:any) -> uint
 

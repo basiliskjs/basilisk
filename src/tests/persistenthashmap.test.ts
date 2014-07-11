@@ -105,7 +105,7 @@ describe('PersistentHashMap', function () {
     });
 
     describe('.size', function () {
-        var count:number = 2;
+        var count:number = 76;
         it("Should work for different keys.", function () {
             var map = Hash.from<number, number>((key:number):number => { return Math.abs(key); }),
                 correct = true;
@@ -127,6 +127,98 @@ describe('PersistentHashMap', function () {
             }
 
             expect(correct).toBe(true);
-        })
+        });
+    });
+
+    describe('.keys', function () {
+        var count:number = 76;
+        it("Should work for different keys.", function () {
+            var map = Hash.from<number, number>((key:number):number => { return Math.abs(key); }),
+                correct = true,
+                seen = {};
+
+            for (var i=0; i < count; i++) {
+                map = map.set(i * 2, i * 4);
+                seen['s' + (i * 2)] = false;
+            }
+
+            map.keys().forEach(function (key:number) {
+                seen['s' + (key)] = true;
+            });
+
+            for (var k in seen) {
+                if (seen.hasOwnProperty(k)) {
+                    correct = correct && seen[k];
+                }
+            }
+
+            expect(correct).toBe(true);
+        });
+
+        it("Should work for collisions.", function () {
+            var map = Hash.from<number, number>((key:number):number => { return 0; }),
+                correct = true,
+                seen = {};
+
+            for (var i=0; i < count; i++) {
+                map = map.set(i * 2, i * 4);
+                seen['s' + (i * 2)] = false;
+            }
+
+            map.keys().forEach(function (key:number) {
+                seen['s' + (key)] = true;
+            });
+
+            for (var k in seen) {
+                if (seen.hasOwnProperty(k)) {
+                    correct = correct && seen[k];
+                }
+            }
+        });
+    });
+
+    describe('.items', function () {
+        var count:number = 76;
+        it("Should work for different keys.", function () {
+            var map = Hash.from<number, number>((key:number):number => { return Math.abs(key); }),
+                correct = true,
+                seen = {};
+
+            for (var i=0; i < count; i++) {
+                map = map.set(i * 2, i * 4);
+                seen['s' + (i * 2)] = false;
+            }
+
+            map.keys().forEach(function (key:number) {
+                seen['s' + (key)] = true;
+            });
+
+            for (var k in seen) {
+                if (seen.hasOwnProperty(k)) {
+                    correct = correct && seen[k];
+                }
+            }
+        });
+
+        it("Should work for collisions.", function () {
+            var map = Hash.from<number, number>((key:number):number => { return 0; }),
+                correct = true,
+                seen = {};
+
+            for (var i=0; i < count; i++) {
+                map = map.set(i * 2, i * 4);
+                seen['s' + (i * 2)] = false;
+            }
+
+            map.keys().forEach(function (key:number) {
+                seen['s' + (key)] = true;
+            });
+
+            for (var k in seen) {
+                if (seen.hasOwnProperty(k)) {
+                    correct = correct && seen[k];
+                }
+            }
+        });
     });
 });

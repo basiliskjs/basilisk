@@ -837,6 +837,8 @@ export module hamt {
                 }
             }
         }
+
+
     }
 
     export class Leaf<K, T> implements Node<K, T> {
@@ -1059,12 +1061,41 @@ export class HashMap<K, T> implements Sequence<T>  {
         return new HashMap<K, T>(undefined, this.hashFn, newroot);
     }
 
+    /**
+     * Iterate over the items in the HashMap, in an undefined order.
+     * @param fn
+     * @param context
+     */
     public forEach(fn:(value:T, key:K, source:HashMap<K, T>) => any, context:any = undefined):void {
         if (this.root === null) {
             return;
         }
 
         this.root.forEach(fn, context, this);
+    }
+
+    /**
+     * Return a Vector of items in an undefined order.
+     */
+    public items():Vector<T> {
+        // TODO given decent for-knowledge we can generate a much faster result.
+        var result = Vector.from<T>([]);
+        this.forEach((value:T, key:K) => {
+            result = result.push(value);
+        });
+        return result;
+    }
+
+    /**
+     * Return a Vector of keys in an undefined order.
+     */
+    public keys():Vector<K> {
+        // TODO given internal knowledge of both vectors we can generate much faster results.
+        var result = Vector.from<K>([]);
+        this.forEach((value:T, key:K) => {
+            result = result.push(key);
+        });
+        return result;
     }
 
     public static from<K, T>(hashFn: hamt.HashFn<K>) {
@@ -1189,6 +1220,20 @@ export class StringMap<T> implements Sequence<T>  {
         }
 
         return equals(this.actual, other.actual);
+    }
+
+    /**
+     * Return a Vector of items in an undefined order.
+     */
+    public items():Vector<T> {
+        return this.actual.items();
+    }
+
+    /**
+     * Return a Vector of keys in an undefined order.
+     */
+    public keys():Vector<string> {
+        return this.actual.keys();
     }
 }
 
