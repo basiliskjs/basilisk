@@ -302,5 +302,46 @@ describe("PersistentVector", function () {
 
             expect(expected.equals(result)).toBe(true);
         });
+
+        it('can operate in another context', function () {
+            var obj = { secret: 'cat' },
+                v1 = V.from<number>([1, 11, 14]),
+                v2 = v1.map(function (value) {
+                    return this.secret + value;
+                }, obj),
+                expected = V.from<string>(['cat1', 'cat11', 'cat14']);
+
+            expect(expected.equals(v2)).toBe(true);
+        });
+    });
+
+    describe('.sort', function () {
+        it('can do a default alphabet sort', function () {
+            var v1 = V.from([6, 3, 19, 1, 19, 0]),
+                v2 = v1.sort(),
+                expected = V.from([0, 1, 19, 19, 3, 6]);
+
+            expect(expected.equals(v2)).toBe(true);
+        });
+
+        it('can do a custom sort', function () {
+            var v1 = V.from<number>([6, 3, 19, 1, 19, 0]),
+                v2 = v1.sort(function (a, b) {
+                    return b - a;
+                }),
+                expected = V.from([19, 19, 6, 3, 1, 0]);
+
+            expect(expected.equals(v2)).toBe(true);
+        });
+    });
+
+    describe('.toArray', function () {
+        it('converts a vector', function () {
+            var v1 = V.from<number>([1, 11, 14, 1, 18]),
+                actual = v1.toArray(),
+                expected = [1, 11, 14, 1, 18];
+
+            expect(actual).toEqual(expected);
+        });
     });
 });
