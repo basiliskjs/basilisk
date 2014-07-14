@@ -499,7 +499,6 @@ export class Vector<T> implements Sequence<T> {
         if (this.root.length === v.WIDTH) {
             shift = this.shift + v.BITS;
             root = v.setIndex([this.root], shift, index, value);
-            root = root;
         } else {
             root = v.setIndex(this.root, shift, index, value);
         }
@@ -629,8 +628,7 @@ export class Vector<T> implements Sequence<T> {
         return value;
     }
 
-    public map<T2>(mapper:(value:T, index:number, vect:any) => T2, context:any = undefined):Vector<T2>
-    {
+    public map<T2>(mapper:(value:T, index:number, vect:any) => T2, context:any = undefined):Vector<T2> {
         var changed:T2[] = [];
 
         this.forEach(function (current:T, index:number, vect:any) {
@@ -638,6 +636,19 @@ export class Vector<T> implements Sequence<T> {
         });
 
         return Vector.from<T2>(changed);
+    }
+
+    public sort(compareFn?:(a:T, b:T) => number):Vector<T> {
+        var changed = this.toArray().sort(compareFn);
+        return Vector.from<T>(changed);
+    }
+
+    public toArray():Array<T> {
+        var arr = [];
+        this.forEach((item:T) => {
+            arr.push(item);
+        });
+        return arr;
     }
 
     // Factory function to create instances from various sources.
