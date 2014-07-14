@@ -177,7 +177,7 @@ describe('PersistentHashMap', function () {
         });
     });
 
-    describe('.items', function () {
+    describe('.values', function () {
         var count:number = 76;
         it("Should work for different keys.", function () {
             var map = Hash.from<number, number>((key:number):number => { return Math.abs(key); }),
@@ -186,10 +186,10 @@ describe('PersistentHashMap', function () {
 
             for (var i=0; i < count; i++) {
                 map = map.set(i * 2, i * 4);
-                seen['s' + (i * 2)] = false;
+                seen['s' + (i * 4)] = false;
             }
 
-            map.keys().forEach(function (key:number) {
+            map.values().forEach(function (key:number) {
                 seen['s' + (key)] = true;
             });
 
@@ -207,10 +207,10 @@ describe('PersistentHashMap', function () {
 
             for (var i=0; i < count; i++) {
                 map = map.set(i * 2, i * 4);
-                seen['s' + (i * 2)] = false;
+                seen['s' + (i * 4)] = false;
             }
 
-            map.keys().forEach(function (key:number) {
+            map.values().forEach(function (key:number) {
                 seen['s' + (key)] = true;
             });
 

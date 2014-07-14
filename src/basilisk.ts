@@ -1103,9 +1103,9 @@ export class HashMap<K, T> implements Sequence<T>  {
     }
 
     /**
-     * Return a Vector of items in an undefined order.
+     * Return a Vector of values in an undefined order.
      */
-    public items():Vector<T> {
+    public values():Vector<T> {
         // TODO given decent for-knowledge we can generate a much faster result.
         var result = Vector.from<T>([]);
         this.forEach((value:T, key:K) => {
@@ -1253,8 +1253,8 @@ export class StringMap<T> implements Sequence<T>  {
     /**
      * Return a Vector of items in an undefined order.
      */
-    public items():Vector<T> {
-        return this.actual.items();
+    public values():Vector<T> {
+        return this.actual.values();
     }
 
     /**

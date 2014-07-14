@@ -178,9 +178,9 @@ StringMap
     with the value and key for each item in turn.  Optionally, you can specify a context
     which will appear as ``this`` to the function.
 
-.. method:: StringMap.items() -> Vector
+.. method:: StringMap.values() -> Vector
 
-    Returns a Vector containing the items in the StringMap, in an undefined order.
+    Returns a Vector containing the values in the StringMap, in an undefined order.
 
 .. method:: StringMap.keys() -> Vector
 
@@ -243,9 +243,9 @@ HashMap
     with the value and key for each item in turn.  Optionally, you can specify a context
     which will appear as ``this`` to the function.
 
-.. method:: HashMap.items() -> Vector
+.. method:: HashMap.values() -> Vector
 
-    Returns a Vector containing the items in the StringMap, in an undefined order.
+    Returns a Vector containing the values in the StringMap, in an undefined order.
 
 .. method:: HashMap.keys() -> Vector
 
