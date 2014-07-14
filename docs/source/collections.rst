@@ -114,6 +114,21 @@ Vector
         A new Vector containing the results of applying the mapper to the
         contents of `this` in order.
 
+.. method:: Vector.sort( compare? : function (a:T, b:T) -> number ) -> Vector
+
+    :returns:
+        A sorted version of the Vector, after applying the ``compare`` function.
+        If no function is provided, it will use the standard javascript comparison.
+
+.. method:: Vector.toArray() -> []
+
+    Creates an new javascript array containing the elements in the Vector.
+    This is useful when interoperating with javascript libraries which
+    do not support Vector objects.
+
+    :returns:
+        A javascript array containing the elements from this Vector.
+
 
 
 StringMap
