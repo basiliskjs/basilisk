@@ -102,6 +102,20 @@ Vector
         the first item for which ``finder`` returns true, or ``undefined`` if
         it never does.
 
+.. method:: Vector.map(mapper : function (item : any, index : number), context:any) -> Vector
+
+    Apply a function to all the elements in a vector, and return a new vector containing
+    the result of those calls.
+
+    :param mapper:
+        A function which takes an item (and optionally its index) from the current
+        vector, and returns an object for the new vector.
+    :returns:
+        A new Vector containing the results of applying the mapper to the
+        contents of `this` in order.
+
+
+
 StringMap
 =========
 

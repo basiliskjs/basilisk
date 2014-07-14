@@ -629,6 +629,17 @@ export class Vector<T> implements Sequence<T> {
         return value;
     }
 
+    public map<T2>(mapper:(value:T, index:number, vect:any) => T2, context:any = undefined):Vector<T2>
+    {
+        var changed:T2[] = [];
+
+        this.forEach(function (current:T, index:number, vect:any) {
+            changed.push(mapper.call(context, current, index, vect));
+        });
+
+        return Vector.from<T2>(changed);
+    }
+
     // Factory function to create instances from various sources.
     static from<T>(obj?:any):Vector<T> {
         if (obj === null || obj === undefined) {

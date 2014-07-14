@@ -293,4 +293,14 @@ describe("PersistentVector", function () {
             expect(big2.equals(big1)).toBe(false);
         });
     });
+
+    describe('.map', function () {
+        it("Should return a vector containing the result of the function.", function () {
+            var base = V.from(['a', 'b', 'c']),
+                expected = V.from(['a0', 'b1', 'c2']),
+                result = base.map((v:string, i:number):string => { return v + i; });
+
+            expect(expected.equals(result)).toBe(true);
+        });
+    });
 });
