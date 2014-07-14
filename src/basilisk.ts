@@ -592,11 +592,17 @@ export class Vector<T> implements Sequence<T> {
         return Vector.from<T>(temp);
     }
 
+    /**
+     * Return the first item in the vector for which the function returns true.
+     */
     public find(fn:(value:T, index:number, vect:any) => boolean, context:any = undefined):T {
-        var value = undefined;
+        var value = undefined,
+            found = false;
         this.forEach((item:T, index:number) => {
+            if (found) { return; }
             if (fn.call(context, item, index, this)) {
                 value = item;
+                found = true;
             }
         });
         return value;

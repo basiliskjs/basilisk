@@ -8,7 +8,7 @@ Basilisk has good implementations of the most important data structures for
 application work.  All collections are **immutable** - methods which would
 mutate them (in normal code) return new versions of the collections.
 
-Where time complexity is stated, recall that log[32] of 1 billion is just 
+Where time complexity is stated, recall that log :sub:`32` of 1 billion is just
 less than 6.
 
 Vector
@@ -17,7 +17,7 @@ Vector
 .. class:: Vector
     
     The Vector class is a random access data structure which can be accessed
-    by numeric key.  Push, pop and set are all O(log[32] n), which makes the
+    by numeric key.  Push, pop and set are all O(log :sub:`32` n), which makes the
     time complexity very low for practical datasets.
 
     Note that - as for all Basilisk collections - the constructor is private
@@ -42,7 +42,7 @@ Vector
     Retrieve the value at a particular position in the Vector.  Note that
     (unlike Javascript arrays) retrieving a position which is outside the
     range of the collection is an Error.
-    Time complexity: O(log[32] n)
+    Time complexity: O(log :sub:`32` n)
 
     :param index:
        The position in the vector to return.  Must be in the range
@@ -53,24 +53,25 @@ Vector
 
     Creates a **new Vector** which has the specified value in its last 
     position.  The instance on which it is called is not modified.
-    Time complexity: O(log[32] n)
+    Time complexity: O(log :sub:`32` n)
 
 .. method:: Vector.set(index : number, value : any) -> Vector
 
     Creates a **new Vector** which has the specified position replaced
     with the specified value.  If the value ```===``` the current value
     in that position, will return ``this``.
-    Time complexity: O(log[32] n)
+    Time complexity: O(log :sub:`32` n)
 
-    :param index: a number in the range (-length ; length).  
-
-
+    :param index: a number in the range (-length ; length).
 
 .. method:: Vector.pop() -> Vector
 
-    Returns a **new Vector** which has the item in the final position 
-    removed.  
-    Time complexity: O(log[32] n)
+    Time complexity: O(log :sub:`32` n)
+
+    :return:
+        a **new Vector** which has the item in the final position
+        removed.
+
 
 .. method:: Vector.peek() -> any
     
@@ -91,6 +92,15 @@ Vector
     :param other: 
         Another object to check for equality.  If this is **not** a Vector, this 
         will never return true.
+
+.. method:: Vector.find(finder : function (item : any, index : number), context:any) -> any
+
+    Iterates over the Vector in order, calling ``finder`` for each element in turn
+    until ``finder`` returns true.
+
+    :return:
+        the first item for which ``finder`` returns true, or ``undefined`` if
+        it never does.
 
 StringMap
 =========

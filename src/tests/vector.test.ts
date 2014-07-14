@@ -253,6 +253,22 @@ describe("PersistentVector", function () {
         });
     });
 
+    describe('.find', function () {
+        it("returns the item for which the function returns true.", function () {
+            var vals = V.from(['dog', 'cat', 'tree']),
+                results = vals.find((v:string):boolean => { return v.charAt(0) === 't'});
+
+            expect(results).toBe('tree');
+        });
+
+        it("returns the first item for which the function returns true.", function () {
+            var vals = V.from(['dog', 'cat', 'tree', 'topiary']),
+                results = vals.find((v:string):boolean => { return v.charAt(0) === 't'});
+
+            expect(results).toBe('tree');
+        });
+    });
+
     describe('.equals', function () {
         it("Should compare simple vectors equally.", function () {
             var empty1 = V.from([]), empty2 = V.from([]),
