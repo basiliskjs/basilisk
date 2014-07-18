@@ -13,7 +13,7 @@ var Person = basilisk.makeStruct(['name', 'age']),
 ```
 
 Making code which updates deeply nested structures **simple** and **clear** 
-is library's main aim.
+is the library's main aim.
 
 ```javascript    
 // we make a quick alias, to reduce clutter in the code.
