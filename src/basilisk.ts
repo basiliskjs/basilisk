@@ -303,15 +303,14 @@ export class ArrayVector<T> implements Sequence<T> {
             i;
 
         if (howMany == 0 && newElements.length == 0) {
-            return {
+            return freeze({
                 spliced: this,
                 removed: ArrayVector.from([])
-            };
+            });
         }
 
-        if (index < 0) {
-            index = this.length + index;
-        }
+        index = v.rangecheck(index, this.length);
+
         for (i = 0; i < index; i++) {
             result[i] = this.get(i);
         }
@@ -324,7 +323,7 @@ export class ArrayVector<T> implements Sequence<T> {
         for (i = index + howMany; i < this.length; i++) {
             result.push(this.get(i));
         }
-        return {spliced: ArrayVector.from(result), removed: ArrayVector.from(removed)};
+        return freeze({spliced: ArrayVector.from(result), removed: ArrayVector.from(removed)});
     }
 
     public equals(other:any):boolean {
@@ -653,15 +652,14 @@ export class Vector<T> implements Sequence<T> {
             i;
 
         if (howMany == 0 && newElements.length == 0) {
-            return {
+            return freeze({
                 spliced: this,
                 removed: Vector.fromArray([])
-            };
+            });
         }
 
-        if (index < 0) {
-            index = this.length + index;
-        }
+        index = v.rangecheck(index, this.length);
+
         for (i = 0; i < index; i++) {
             result[i] = this.get(i);
         }
@@ -674,7 +672,7 @@ export class Vector<T> implements Sequence<T> {
         for (i = index + howMany; i < this.length; i++) {
             result.push(this.get(i));
         }
-        return {spliced: Vector.fromArray(result), removed: Vector.fromArray(removed)};
+        return freeze({spliced: Vector.fromArray(result), removed: Vector.fromArray(removed)});
     }
 
     // find an item by ===
